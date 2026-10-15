@@ -5,6 +5,7 @@
 .specify/
 .claude/
 .cache/
+__pycache__/
 .sync*
 
 # Ignore log files
