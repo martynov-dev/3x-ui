@@ -614,6 +614,30 @@ export const EXAMPLES: Record<string, unknown> = {
     "masterId": 0,
     "path": ""
   },
+  "FullBackupFile": {
+    "modified": "2025-01-01T00:00:00Z",
+    "name": "",
+    "size": 0
+  },
+  "FullBackupSettings": {
+    "enabled": false,
+    "identityFile": "",
+    "intervalHours": 0,
+    "keep": 0,
+    "paths": [
+      ""
+    ],
+    "remoteHost": "",
+    "remotePath": "",
+    "remotePort": 0,
+    "remoteUser": ""
+  },
+  "FullBackupStatus": {
+    "error": "",
+    "file": "",
+    "lastAttempt": "2025-01-01T00:00:00Z",
+    "lastSuccess": "2025-01-01T00:00:00Z"
+  },
   "GeoCategory": {
     "attributes": [
       "ads",
@@ -889,6 +913,12 @@ export const EXAMPLES: Record<string, unknown> = {
   },
   "NewUUIDResponse": {
     "uuid": "550e8400-e29b-41d4-a716-446655440000"
+  },
+  "NginxSite": {
+    "config": "",
+    "configPath": "",
+    "html": "",
+    "root": ""
   },
   "Node": {
     "activeCount": 23,

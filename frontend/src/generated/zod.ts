@@ -605,6 +605,34 @@ export const FallbackParentInfoSchema = z.object({
 });
 export type FallbackParentInfo = z.infer<typeof FallbackParentInfoSchema>;
 
+export const FullBackupFileSchema = z.object({
+  modified: z.string(),
+  name: z.string(),
+  size: z.number().int(),
+});
+export type FullBackupFile = z.infer<typeof FullBackupFileSchema>;
+
+export const FullBackupSettingsSchema = z.object({
+  enabled: z.boolean(),
+  identityFile: z.string(),
+  intervalHours: z.number().int(),
+  keep: z.number().int(),
+  paths: z.array(z.string()),
+  remoteHost: z.string(),
+  remotePath: z.string(),
+  remotePort: z.number().int(),
+  remoteUser: z.string(),
+});
+export type FullBackupSettings = z.infer<typeof FullBackupSettingsSchema>;
+
+export const FullBackupStatusSchema = z.object({
+  error: z.string(),
+  file: z.string(),
+  lastAttempt: z.string(),
+  lastSuccess: z.string(),
+});
+export type FullBackupStatus = z.infer<typeof FullBackupStatusSchema>;
+
 export const GeoCategorySchema = z.object({
   attributes: z.array(z.string()),
   code: z.string(),
@@ -861,6 +889,14 @@ export const NewUUIDResponseSchema = z.object({
   uuid: z.string(),
 });
 export type NewUUIDResponse = z.infer<typeof NewUUIDResponseSchema>;
+
+export const NginxSiteSchema = z.object({
+  config: z.string(),
+  configPath: z.string(),
+  html: z.string(),
+  root: z.string(),
+});
+export type NginxSite = z.infer<typeof NginxSiteSchema>;
 
 export const NodeSchema = z.object({
   activeCount: z.number().int(),

@@ -573,6 +573,31 @@ export interface FallbackParentInfo {
   path?: string;
 }
 
+export interface FullBackupFile {
+  modified: string;
+  name: string;
+  size: number;
+}
+
+export interface FullBackupSettings {
+  enabled: boolean;
+  identityFile: string;
+  intervalHours: number;
+  keep: number;
+  paths: string[];
+  remoteHost: string;
+  remotePath: string;
+  remotePort: number;
+  remoteUser: string;
+}
+
+export interface FullBackupStatus {
+  error: string;
+  file: string;
+  lastAttempt: string;
+  lastSuccess: string;
+}
+
 export interface GeoCategory {
   attributes: string[];
   code: string;
@@ -807,6 +832,13 @@ export interface Msg {
 
 export interface NewUUIDResponse {
   uuid: string;
+}
+
+export interface NginxSite {
+  config: string;
+  configPath: string;
+  html: string;
+  root: string;
 }
 
 export interface Node {

@@ -105,6 +105,7 @@ func (a *ServerController) startTask() {
 			logger.Warning("persist system metrics failed:", err)
 		}
 	})
+	_, _ = c.AddFunc("@every 1m", scheduledFullBackup)
 }
 
 // status returns the current server status information.

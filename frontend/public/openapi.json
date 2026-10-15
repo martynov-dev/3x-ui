@@ -2460,6 +2460,99 @@
         ],
         "type": "object"
       },
+      "FullBackupFile": {
+        "properties": {
+          "modified": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "size": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "modified",
+          "name",
+          "size"
+        ],
+        "type": "object"
+      },
+      "FullBackupSettings": {
+        "description": "FullBackupSettings are separate from upstream settings to keep fork changes isolated.",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "identityFile": {
+            "type": "string"
+          },
+          "intervalHours": {
+            "type": "integer"
+          },
+          "keep": {
+            "type": "integer"
+          },
+          "paths": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "remoteHost": {
+            "type": "string"
+          },
+          "remotePath": {
+            "type": "string"
+          },
+          "remotePort": {
+            "type": "integer"
+          },
+          "remoteUser": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "enabled",
+          "identityFile",
+          "intervalHours",
+          "keep",
+          "paths",
+          "remoteHost",
+          "remotePath",
+          "remotePort",
+          "remoteUser"
+        ],
+        "type": "object"
+      },
+      "FullBackupStatus": {
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "file": {
+            "type": "string"
+          },
+          "lastAttempt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "lastSuccess": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "error",
+          "file",
+          "lastAttempt",
+          "lastSuccess"
+        ],
+        "type": "object"
+      },
       "GeoCategory": {
         "description": "GeoCategory is one code inside a database, such as geosite's \"google\".",
         "properties": {
@@ -3503,6 +3596,29 @@
         },
         "required": [
           "uuid"
+        ],
+        "type": "object"
+      },
+      "NginxSite": {
+        "properties": {
+          "config": {
+            "type": "string"
+          },
+          "configPath": {
+            "type": "string"
+          },
+          "html": {
+            "type": "string"
+          },
+          "root": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "config",
+          "configPath",
+          "html",
+          "root"
         ],
         "type": "object"
       },
@@ -4738,6 +4854,10 @@
   ],
   "tags": [
     {
+      "name": "Backups and nginx website",
+      "description": "Fork maintenance API. Requires an admin session or admin token; browser mutations require CSRF. Full archives contain secrets."
+    },
+    {
       "name": "Authentication",
       "description": "Two authentication modes are supported. UI sessions use a cookie set by the login endpoint. Programmatic clients (bots, scripts, remote panels) authenticate with a Bearer token taken from Settings → Security → API Token. Both work for every endpoint under /panel/api/*."
     },
@@ -4791,6 +4911,314 @@
     }
   ],
   "paths": {
+    "/panel/api/maintenance/backups": {
+      "get": {
+        "tags": [
+          "Backups and nginx website"
+        ],
+        "summary": "Get settings, last run status and local archives. Automatic backups are disabled until configured.",
+        "operationId": "get_panel_api_maintenance_backups",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {
+                      "type": "object",
+                      "properties": {
+                        "settings": {
+                          "$ref": "#/components/schemas/FullBackupSettings"
+                        },
+                        "status": {
+                          "$ref": "#/components/schemas/FullBackupStatus"
+                        },
+                        "files": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/FullBackupFile"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/maintenance/backups/settings": {
+      "post": {
+        "tags": [
+          "Backups and nginx website"
+        ],
+        "summary": "Save interval (hours), local retention, extra source paths and optional SSH destination. Empty remoteHost means local storage only. SSH requires verified known_hosts, key authentication and a POSIX remote shell. Remote retention is external.",
+        "operationId": "post_panel_api_maintenance_backups_settings",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FullBackupSettings"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/maintenance/backups/run": {
+      "post": {
+        "tags": [
+          "Backups and nginx website"
+        ],
+        "summary": "Create an archive and optionally upload it. Synchronous; allow up to 30 minutes. Failed uploads retain the local archive and record an error.",
+        "operationId": "post_panel_api_maintenance_backups_run",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {
+                      "$ref": "#/components/schemas/FullBackupStatus"
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": {
+                    "error": "",
+                    "file": "",
+                    "lastAttempt": "2025-01-01T00:00:00Z",
+                    "lastSuccess": "2025-01-01T00:00:00Z"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/maintenance/backups/download/{name}": {
+      "get": {
+        "tags": [
+          "Backups and nginx website"
+        ],
+        "summary": "Download an existing full archive. Restore manually; database import does not accept full archives.",
+        "operationId": "get_panel_api_maintenance_backups_download_name",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "description": "",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Archive",
+            "content": {
+              "application/gzip": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Invalid or missing archive"
+          }
+        }
+      }
+    },
+    "/panel/api/maintenance/nginx": {
+      "get": {
+        "tags": [
+          "Backups and nginx website"
+        ],
+        "summary": "Read site configuration and index.html. Defaults to saved paths. Config is restricted to /etc/nginx except nginx.conf; root to /var/www or /usr/share/nginx/html.",
+        "operationId": "get_panel_api_maintenance_nginx",
+        "parameters": [
+          {
+            "name": "configPath",
+            "in": "query",
+            "required": false,
+            "description": "",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "root",
+            "in": "query",
+            "required": false,
+            "description": "",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {
+                      "$ref": "#/components/schemas/NginxSite"
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": {
+                    "config": "",
+                    "configPath": "",
+                    "html": "",
+                    "root": ""
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Backups and nginx website"
+        ],
+        "summary": "Write configuration and index.html, test with nginx -t and reload. Restore old files on write/test/reload command failure. Requires installed, running nginx. Does not issue certificates or change Xray fallbacks.",
+        "operationId": "post_panel_api_maintenance_nginx",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NginxSite"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/maintenance/nginx/sites": {
+      "get": {
+        "tags": [
+          "Backups and nginx website"
+        ],
+        "summary": "Discover enabled site files and document roots using nginx -T without modifying them.",
+        "operationId": "get_panel_api_maintenance_nginx_sites",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/NginxSite"
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": [
+                    {
+                      "config": "",
+                      "configPath": "",
+                      "html": "",
+                      "root": ""
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/login": {
       "post": {
         "tags": [

@@ -181,6 +181,7 @@ func (a *APIController) initRouter(g *gin.RouterGroup) {
 	api.Use(middleware.CSRFMiddleware())
 
 	api.GET("/openapi.json", ServeOpenAPISpec)
+	registerMaintenanceRoutes(api)
 
 	// Inbounds API
 	inbounds := api.Group("/inbounds")
