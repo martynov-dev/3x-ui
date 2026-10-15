@@ -1,9 +1,11 @@
 .git
+.cache
 **/node_modules
 internal/web/dist
 build
 db
 cert
+acme
 pgdata
 x-ui/
 *.db
