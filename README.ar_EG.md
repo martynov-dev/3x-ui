@@ -21,7 +21,7 @@
 قبل التثبيت، انشر إصداراً يتضمن الملفات التنفيذية والمجاميع الاختبارية اللازمة. يمكنك استخدام GitHub Actions **Release 3X-UI** أو إعداد الملفات ورفعها يدوياً. يستخدم البناء المتجدد للفرع `main` الوسم `dev-latest`:
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/martynov-dev/3x-ui/main/install.sh) dev-latest
+bash <(curl -fsSL https://raw.githubusercontent.com/martynov-dev/3x-ui/main/setup.sh) dev-latest
 ```
 
 لتحديث تثبيت موجود إلى هذه النسخة:
@@ -46,7 +46,15 @@ XUI_UPDATE_TAG=dev-latest bash <(curl -fsSL https://raw.githubusercontent.com/ma
 
 ### الاستعادة
 
-الاستعادة الكاملة يدوية. لا تستخدم زر استيراد قاعدة البيانات للأرشيف الكامل. افحص `manifest.json` وثبّت إصدارات متوافقة من اللوحة وnginx وأوقف اللوحة. أعد محتويات `files/` إلى مساراتها المطلقة مع الحفاظ على الملكية والصلاحيات والروابط الرمزية. استعد SQLite أثناء توقف اللوحة أو استعد تفريغ PostgreSQL. نفّذ `nginx -t` قبل تشغيل الخدمات. اختبر الاستعادة أولاً على تثبيت منفصل.
+على Ubuntu/Debian مع SQLite، استخدم سكربتاً واحداً للتثبيت والاستعادة بصلاحيات root. يجب أن تكون النسخة الكاملة من Linux وبنفس معمارية المعالج وإصدار التوزيعة. يتحقق السكربت من الأرشيف وSQLite، ويثبت الاعتماديات ويستعيد ملف اللوحة التنفيذي المحفوظ وقاعدة البيانات وnginx والموقع والشهادات ويشغّل الخدمات. يبقى عنوان اللوحة وبيانات الدخول كما في النسخة. --check للفحص دون تطبيق؛ --replace يسمح صراحة باستبدال تثبيت موجود. عند فشل التطبيق تُستعاد الملفات السابقة؛ وإن فشل التراجع تبقى في /var/backups/x-ui-restore-*. تحتاج نسخ PostgreSQL وDocker حالياً إلى استعادة يدوية. لا تُستعاد قواعد الجدار الناري الخارجي أو DNS أو الخدمات الخارجية. استعد الأرشيفات الموثوقة فقط. يجب نشر السكربت في هذا المستودع قبل استخدام رابط تنزيله.
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/martynov-dev/3x-ui/main/setup.sh -o setup.sh
+
+sudo bash setup.sh --backup /root/full-backup.tar.gz --check
+
+sudo bash setup.sh --backup /root/full-backup.tar.gz
+```
 
 ## موقع nginx
 

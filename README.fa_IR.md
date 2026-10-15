@@ -21,7 +21,7 @@
 پیش از نصب، انتشاری با فایل‌های اجرایی لازم و مجموع‌های کنترلی منتشر کنید. می‌توانید از GitHub Actions **Release 3X-UI** استفاده کنید یا فایل‌ها را دستی آماده و بارگذاری کنید. ساخت پیوستهٔ شاخهٔ `main` از برچسب `dev-latest` استفاده می‌کند:
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/martynov-dev/3x-ui/main/install.sh) dev-latest
+bash <(curl -fsSL https://raw.githubusercontent.com/martynov-dev/3x-ui/main/setup.sh) dev-latest
 ```
 
 برای به‌روزرسانی نصب موجود به این فورک:
@@ -46,7 +46,15 @@ XUI_UPDATE_TAG=dev-latest bash <(curl -fsSL https://raw.githubusercontent.com/ma
 
 ### بازیابی
 
-بازیابی کامل دستی است. آرشیو کامل را با دکمهٔ وارد کردن پایگاه داده وارد نکنید. `manifest.json` را بررسی کنید، نسخه‌های سازگار پنل و nginx را نصب و پنل را متوقف کنید. فایل‌های `files/` را با حفظ مالکیت، مجوزها و پیوندهای نمادین به مسیرهای مطلق متناظر بازگردانید. SQLite را هنگام توقف پنل یا دامپ PostgreSQL را بازیابی کنید. پیش از اجرای سرویس‌ها `nginx -t` را اجرا کنید. ابتدا بازیابی را روی نصبی جداگانه آزمایش کنید.
+در Ubuntu/Debian با SQLite، اسکریپت مشترک نصب و بازیابی را با root اجرا کنید. پشتیبان کامل Linux باید از همان معماری پردازنده و نسخهٔ توزیع باشد. اسکریپت آرشیو و SQLite را بررسی می‌کند، وابستگی‌ها را نصب و فایل اجرایی ذخیره‌شدهٔ پنل، پایگاه داده، nginx، سایت و گواهی‌ها را بازیابی و سرویس‌ها را اجرا می‌کند. نشانی پنل و اطلاعات ورود از پشتیبان حفظ می‌شوند. --check فقط بررسی می‌کند؛ --replace جایگزینی نصب موجود را صریحاً مجاز می‌کند. هنگام خطای اعمال، فایل‌ها بازگردانده می‌شوند؛ اگر بازگردانی شکست بخورد، فایل‌های قبلی در /var/backups/x-ui-restore-* می‌مانند. PostgreSQL و پشتیبان Docker فعلاً بازیابی دستی دارند. دیوارهٔ آتش خارجی، DNS و سرویس‌های خارجی بازیابی نمی‌شوند. فقط آرشیو قابل اعتماد را بازیابی کنید. پیش از استفاده از نشانی دانلود، اسکریپت باید در این فورک منتشر شود.
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/martynov-dev/3x-ui/main/setup.sh -o setup.sh
+
+sudo bash setup.sh --backup /root/full-backup.tar.gz --check
+
+sudo bash setup.sh --backup /root/full-backup.tar.gz
+```
 
 ## سایت nginx
 

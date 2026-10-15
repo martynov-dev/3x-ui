@@ -21,7 +21,7 @@
 安装前，请发布包含所需二进制文件和校验和的版本。可使用 GitHub Actions **Release 3X-UI** 构建和发布，也可手动准备并上传。`main` 分支的滚动构建使用 `dev-latest`：
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/martynov-dev/3x-ui/main/install.sh) dev-latest
+bash <(curl -fsSL https://raw.githubusercontent.com/martynov-dev/3x-ui/main/setup.sh) dev-latest
 ```
 
 将现有安装更新到本分支：
@@ -46,7 +46,15 @@ XUI_UPDATE_TAG=dev-latest bash <(curl -fsSL https://raw.githubusercontent.com/ma
 
 ### 恢复
 
-完整恢复需要手动进行。不要使用数据库导入按钮导入完整归档。检查 `manifest.json`，安装兼容的面板/nginx 版本并停止面板。将 `files/` 恢复到对应绝对路径，保留所有者、权限和符号链接。在面板停止时恢复 SQLite 快照，或恢复 PostgreSQL 转储。启动服务前运行 `nginx -t`。请先在独立安装上测试恢复。
+Ubuntu/Debian 与 SQLite 可使用同一个脚本安装或恢复，请以 root 运行。完整 Linux 备份必须来自相同 CPU 架构和发行版版本。脚本验证归档和 SQLite 快照，安装依赖，恢复归档中的面板程序、数据库、nginx、网站与证书，并启动服务。面板地址和登录凭据保持为备份中的值。--check 仅检查不应用；--replace 明确允许替换现有安装。应用失败时回滚文件；回滚失败时原文件保留在 /var/backups/x-ui-restore-*。PostgreSQL 和 Docker 备份目前需要手动恢复。外部防火墙、DNS 和外部服务不会恢复。只恢复可信归档。使用下载地址前，脚本必须已在本分支发布。
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/martynov-dev/3x-ui/main/setup.sh -o setup.sh
+
+sudo bash setup.sh --backup /root/full-backup.tar.gz --check
+
+sudo bash setup.sh --backup /root/full-backup.tar.gz
+```
 
 ## nginx 网站
 

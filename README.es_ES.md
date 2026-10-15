@@ -21,7 +21,7 @@ Basado en **3X-UI v3.10.2**, commit [608ef4e4010bf83e2e78328e08f77efc051ad4d7](h
 Antes de instalar, publique una versión con los binarios y las sumas de comprobación necesarios. Puede usar GitHub Actions **Release 3X-UI** o prepararlos y subirlos manualmente. La compilación continua de `main` usa `dev-latest`:
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/martynov-dev/3x-ui/main/install.sh) dev-latest
+bash <(curl -fsSL https://raw.githubusercontent.com/martynov-dev/3x-ui/main/setup.sh) dev-latest
 ```
 
 Para actualizar una instalación existente a este fork:
@@ -46,7 +46,15 @@ Los archivos contienen contraseñas y claves privadas. SSH cifra el transporte; 
 
 ### Restauración
 
-La restauración completa es manual. No use el botón de importar base de datos para un archivo completo. Revise `manifest.json`, instale versiones compatibles del panel/nginx y detenga el panel. Restaure `files/` en sus rutas absolutas conservando propietarios, permisos y enlaces simbólicos. Restaure SQLite con el panel detenido o restaure el volcado PostgreSQL. Ejecute `nginx -t` antes de iniciar los servicios. Pruebe primero en una instalación separada.
+En Ubuntu/Debian con SQLite, use el mismo script para instalar o restaurar como root. La copia completa de Linux debe tener la misma arquitectura y versión de distribución. El script valida el archivo y SQLite, instala dependencias, restaura el ejecutable archivado del panel, la base, nginx, el sitio y los certificados e inicia los servicios. Conserva la URL y las credenciales de la copia. --check valida sin aplicar; --replace autoriza reemplazar una instalación existente. Si falla la aplicación, se revierten los archivos; si falla la reversión, se conservan en /var/backups/x-ui-restore-*. PostgreSQL y las copias de Docker requieren restauración manual. No se restauran firewall externo, DNS ni servicios externos. Use solo archivos de confianza. El script debe publicarse en este fork antes de usar su URL.
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/martynov-dev/3x-ui/main/setup.sh -o setup.sh
+
+sudo bash setup.sh --backup /root/full-backup.tar.gz --check
+
+sudo bash setup.sh --backup /root/full-backup.tar.gz
+```
 
 ## Sitio web nginx
 

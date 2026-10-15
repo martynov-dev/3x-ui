@@ -21,7 +21,7 @@ Temel sürüm **3X-UI v3.10.2**, commit [608ef4e4010bf83e2e78328e08f77efc051ad4d
 Kurulumdan önce gerekli ikili dosyaları ve sağlama toplamlarını içeren bir sürüm yayımlayın. GitHub Actions **Release 3X-UI** kullanabilir veya dosyaları elle hazırlayıp yükleyebilirsiniz. `main` dalının sürekli derlemesi `dev-latest` etiketini kullanır:
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/martynov-dev/3x-ui/main/install.sh) dev-latest
+bash <(curl -fsSL https://raw.githubusercontent.com/martynov-dev/3x-ui/main/setup.sh) dev-latest
 ```
 
 Mevcut kurulumu bu çatala güncellemek için:
@@ -46,7 +46,15 @@ Arşivlerde parolalar ve özel anahtarlar bulunur. SSH aktarımı şifreler; dis
 
 ### Geri yükleme
 
-Tam geri yükleme elle yapılır. Tam arşivi veritabanı içe aktarma düğmesiyle yüklemeyin. `manifest.json` dosyasını inceleyin, uyumlu panel/nginx sürümlerini kurun ve paneli durdurun. `files/` içeriğini sahiplik, izin ve sembolik bağlantıları koruyarak ilgili mutlak yollara geri yükleyin. Panel durmuşken SQLite görüntüsünü veya PostgreSQL dökümünü geri yükleyin. Servisleri başlatmadan önce `nginx -t` çalıştırın. Önce ayrı bir kurulumda deneyin.
+Ubuntu/Debian ve SQLite için root olarak aynı kurulum ve geri yükleme betiğini kullanın. Tam Linux yedeği aynı işlemci mimarisi ve dağıtım sürümünden olmalıdır. Betik arşivi ve SQLite görüntüsünü doğrular, bağımlılıkları kurar, arşivdeki paneli, veritabanını, nginx’i, siteyi ve sertifikaları geri yükleyip servisleri başlatır. Panel adresi ve giriş bilgileri yedekten gelir. --check uygulamadan kontrol eder; --replace mevcut kurulumun değiştirilmesine açıkça izin verir. Uygulama hatasında dosyalar geri alınır; geri alma başarısızsa eski dosyalar /var/backups/x-ui-restore-* altında korunur. PostgreSQL ve Docker yedekleri şimdilik elle geri yüklenir. Harici güvenlik duvarı, DNS ve harici servisler geri yüklenmez. Yalnızca güvenilir arşivleri kullanın. URL kullanılmadan önce betik bu çatalda yayımlanmalıdır.
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/martynov-dev/3x-ui/main/setup.sh -o setup.sh
+
+sudo bash setup.sh --backup /root/full-backup.tar.gz --check
+
+sudo bash setup.sh --backup /root/full-backup.tar.gz
+```
 
 ## nginx sitesi
 

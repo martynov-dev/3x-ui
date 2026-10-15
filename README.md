@@ -21,7 +21,7 @@ Based on **3X-UI v3.10.2**, commit [608ef4e4010bf83e2e78328e08f77efc051ad4d7](ht
 Before installation, publish a release containing the required binaries and checksums. GitHub Actions **Release 3X-UI** can build and publish them, or you can prepare and upload them manually. The rolling build of `main` uses `dev-latest`:
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/martynov-dev/3x-ui/main/install.sh) dev-latest
+bash <(curl -fsSL https://raw.githubusercontent.com/martynov-dev/3x-ui/main/setup.sh) dev-latest
 ```
 
 To update an existing installation to this fork:
@@ -46,7 +46,15 @@ Archives contain passwords and private keys. SSH encrypts transport; the archive
 
 ### Restoring
 
-Full restoration is manual. Do not use the database import button for a full archive. Inspect `manifest.json`, install compatible panel/nginx versions and stop the panel. Restore `files/` to the corresponding absolute paths, preserving ownership, permissions and symlinks. Restore SQLite with the panel stopped, or restore the PostgreSQL dump. Run `nginx -t` before starting services. Test restoration on a separate installation first.
+On Ubuntu/Debian with SQLite, use the setup script to install or restore in one workflow. Run as root. For restoration, use a full Linux backup from the same CPU architecture and distribution version. The script validates the archive and SQLite snapshot, installs dependencies, restores the archived panel executable, database, nginx configuration, website and certificates, and starts the services. Login credentials and the panel URL come from the backup. --check validates without applying; --replace explicitly permits overwriting an existing installation. On application failure, changed files are rolled back; recovery files are kept under /var/backups/x-ui-restore-* if rollback fails. PostgreSQL and Docker backups currently require manual restoration. Firewall rules, DNS and external services are not restored. Only restore trusted archives. The script must be published in this fork before using its download URL.
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/martynov-dev/3x-ui/main/setup.sh -o setup.sh
+
+sudo bash setup.sh --backup /root/full-backup.tar.gz --check
+
+sudo bash setup.sh --backup /root/full-backup.tar.gz
+```
 
 ## nginx website
 
