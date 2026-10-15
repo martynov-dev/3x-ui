@@ -12,6 +12,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"slices"
 	"strings"
 	"sync"
@@ -198,7 +199,9 @@ func (s *ServerService) RunFullBackup(ctx context.Context, scheduled bool) (stat
 		return status, settingsErr
 	}
 	paths = append(paths, all.WebCertFile, all.WebKeyFile, all.SubCertFile, all.SubKeyFile,
-		"/etc/systemd/system/x-ui.service", "/usr/lib/systemd/system/x-ui.service", "/etc/init.d/x-ui", "/usr/bin/x-ui")
+		"/etc/systemd/system/x-ui.service", "/etc/systemd/system/x-ui.service.d",
+		"/usr/lib/systemd/system/x-ui.service", "/etc/init.d/x-ui", "/usr/bin/x-ui",
+		"/usr/lib/nginx/modules", "/usr/share/nginx/modules-available", "/root/.ssh/known_hosts")
 	nginxPaths, discoverErr := discoverNginxBackupPaths(ctx)
 	if discoverErr != nil {
 		_ = file.Close()
@@ -357,12 +360,29 @@ func writeFullBackup(ctx context.Context, out io.Writer, staging, dbName string,
 			return fmt.Errorf("archive %s: %w", root, err)
 		}
 	}
+	executable, err := os.Executable()
+	if err != nil {
+		return err
+	}
+	osRelease, err := os.ReadFile("/etc/os-release")
+	if err != nil && !os.IsNotExist(err) {
+		return err
+	}
 	manifest, err := json.MarshalIndent(struct {
-		Version string    `json:"version"`
-		Created time.Time `json:"created"`
-		Sources []string  `json:"sources"`
-		Missing []string  `json:"missing"`
-	}{config.GetPanelVersion(), time.Now().UTC(), paths, missing}, "", "  ")
+		FormatVersion int       `json:"formatVersion"`
+		Version       string    `json:"version"`
+		Created       time.Time `json:"created"`
+		OS            string    `json:"os"`
+		Arch          string    `json:"arch"`
+		OSRelease     string    `json:"osRelease"`
+		DBPath        string    `json:"dbPath"`
+		DBType        string    `json:"dbType"`
+		Executable    string    `json:"executable"`
+		Packages      []string  `json:"packages,omitempty"`
+		Sources       []string  `json:"sources"`
+		Missing       []string  `json:"missing"`
+	}{1, config.GetPanelVersion(), time.Now().UTC(), runtime.GOOS, runtime.GOARCH,
+		string(osRelease), liveDB, config.GetDBKind(), executable, fullBackupPackages(), paths, missing}, "", "  ")
 	if err != nil {
 		return err
 	}
@@ -376,6 +396,24 @@ func writeFullBackup(ctx context.Context, out io.Writer, staging, dbName string,
 		return err
 	}
 	return gz.Close()
+}
+
+// Record installed nginx modules so a clean Debian/Ubuntu host gets their dependencies.
+func fullBackupPackages() []string {
+	output, err := exec.Command("dpkg-query", "-W", "-f=${binary:Package}\t${db:Status-Status}\n", "nginx*", "libnginx-mod-*").Output()
+	// dpkg-query returns partial results with a nonzero status when a glob has no matches.
+	// Other operating systems have no dpkg inventory; their archives remain usable manually.
+	if err != nil && len(output) == 0 {
+		return nil
+	}
+	packages := []string{}
+	for _, line := range strings.Split(string(output), "\n") {
+		fields := strings.Split(line, "\t")
+		if len(fields) == 2 && fields[1] == "installed" {
+			packages = append(packages, fields[0])
+		}
+	}
+	return packages
 }
 
 func ListFullBackups() ([]FullBackupFile, error) {

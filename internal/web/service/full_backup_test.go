@@ -9,6 +9,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -82,13 +83,21 @@ func TestFullBackupUsesSnapshotAndExcludesLiveDatabaseAndArchives(t *testing.T) 
 		t.Fatal("website or nginx missing")
 	}
 	var manifest struct {
-		Missing []string `json:"missing"`
+		FormatVersion int      `json:"formatVersion"`
+		OS            string   `json:"os"`
+		Arch          string   `json:"arch"`
+		DBPath        string   `json:"dbPath"`
+		Executable    string   `json:"executable"`
+		Missing       []string `json:"missing"`
 	}
 	if err := json.Unmarshal([]byte(files["manifest.json"]), &manifest); err != nil {
 		t.Fatal(err)
 	}
 	if len(manifest.Missing) != 1 || manifest.Missing[0] != missing {
 		t.Fatalf("missing sources: %v", manifest.Missing)
+	}
+	if manifest.FormatVersion != 1 || manifest.OS != runtime.GOOS || manifest.Arch != runtime.GOARCH || manifest.DBPath != filepath.Clean(config.GetDBPath()) || manifest.Executable == "" {
+		t.Fatalf("restore metadata missing: %+v", manifest)
 	}
 }
 
