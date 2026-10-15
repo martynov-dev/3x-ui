@@ -185,15 +185,6 @@ English · فارسی · العربية · 中文（简体） · 中文（繁體
 
 المساهمات مرحب بها. يرجى قراءة [دليل المساهمة](/CONTRIBUTING.md) قبل فتح مشكلة (issue) أو طلب سحب (pull request).
 
-## شكر خاص إلى
-
-- [alireza0](https://github.com/alireza0/)
-
-## الاعتراف
-
-- [Iran v2ray rules](https://github.com/chocolate4u/Iran-v2ray-rules) (الترخيص: **GPL-3.0**): _قواعد توجيه v2ray/xray و v2ray/xray-clients المحسنة مع النطاقات الإيرانية المدمجة وتركيز على الأمان وحظر الإعلانات._
-- [Russia v2ray rules](https://github.com/runetfreedom/russia-v2ray-rules-dat) (الترخيص: **GPL-3.0**): _يحتوي هذا المستودع على قواعد توجيه V2Ray محدثة تلقائيًا بناءً على بيانات النطاقات والعناوين المحظورة في روسيا._
-
 ## أدوات المجتمع
 
 أدوات وتكاملات بناها المجتمع حول 3x-ui.

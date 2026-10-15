@@ -185,15 +185,6 @@ English · فارسی · العربية · 中文（简体） · 中文（繁體
 
 欢迎贡献。在提交 issue 或 pull request 之前，请阅读[贡献指南](/CONTRIBUTING.md)。
 
-## 特别感谢
-
-- [alireza0](https://github.com/alireza0/)
-
-## 致谢
-
-- [Iran v2ray rules](https://github.com/chocolate4u/Iran-v2ray-rules) (许可证: **GPL-3.0**): _增强的 v2ray/xray 和 v2ray/xray-clients 路由规则，内置伊朗域名，专注于安全性和广告拦截。_
-- [Russia v2ray rules](https://github.com/runetfreedom/russia-v2ray-rules-dat) (许可证: **GPL-3.0**): _此仓库包含基于俄罗斯被阻止域名和地址数据自动更新的 V2Ray 路由规则。_
-
 ## 社区工具
 
 社区围绕 3x-ui 构建的工具和集成。

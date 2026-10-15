@@ -185,15 +185,6 @@ English · فارسی · العربية · 中文（简体） · 中文（繁體
 
 Las contribuciones son bienvenidas. Por favor, lee la [Guía de contribución](/CONTRIBUTING.md) antes de abrir una incidencia (issue) o una solicitud de incorporación (pull request).
 
-## Un Agradecimiento Especial a
-
-- [alireza0](https://github.com/alireza0/)
-
-## Reconocimientos
-
-- [Iran v2ray rules](https://github.com/chocolate4u/Iran-v2ray-rules) (Licencia: **GPL-3.0**): _Reglas de enrutamiento mejoradas para v2ray/xray y v2ray/xray-clients con dominios iraníes incorporados y un enfoque en seguridad y bloqueo de anuncios._
-- [Russia v2ray rules](https://github.com/runetfreedom/russia-v2ray-rules-dat) (Licencia: **GPL-3.0**): _Este repositorio contiene reglas de enrutamiento V2Ray actualizadas automáticamente basadas en datos de dominios y direcciones bloqueadas en Rusia._
-
 ## Herramientas de la Comunidad
 
 Herramientas e integraciones construidas por la comunidad alrededor de 3x-ui.

@@ -185,15 +185,6 @@ Panel arayüzü 13 farklı dilde mevcuttur:
 
 Katkılarınızı her zaman bekliyoruz. Bir sorun (issue) açmadan veya pull request (PR) göndermeden önce lütfen [Katkıda Bulunma Kılavuzunu](/CONTRIBUTING.md) okuyun.
 
-## Özel Teşekkürler
-
-- [alireza0](https://github.com/alireza0/)
-
-## Teşekkür & Atıf
-
-- [Iran v2ray rules](https://github.com/chocolate4u/Iran-v2ray-rules) (Lisans: **GPL-3.0**): _Geliştirilmiş v2ray/xray ve v2ray/xray-clients yönlendirme (routing) kuralları; yerleşik İran alan adları ile güvenlik ve reklam engelleme odaklıdır._
-- [Russia v2ray rules](https://github.com/runetfreedom/russia-v2ray-rules-dat) (Lisans: **GPL-3.0**): _Bu depo, Rusya'daki engellenen alan adları ve adreslere dayalı otomatik olarak güncellenen V2Ray yönlendirme kurallarını içerir._
-
 ## Topluluk Araçları
 
 3x-ui çevresindeki topluluk tarafından oluşturulmuş araçlar ve entegrasyonlar.
