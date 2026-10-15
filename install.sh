@@ -1544,7 +1544,7 @@ _xui_service_write_paths_dropin() {
         bin_folder="${main_folder%/}/${bin_folder#./}"
     fi
 
-    for path in "$db_folder" "$log_folder" "$bin_folder" "$main_folder"; do
+    for path in "$db_folder" "$log_folder" "$bin_folder" "$main_folder" /etc/nginx /var/www /usr/share/nginx/html; do
         [[ "$path" == /* ]] || continue
         # ReadWritePaths= is a whitespace-separated list, and a folder whose
         # name contains whitespace cannot be written into it without relying on
