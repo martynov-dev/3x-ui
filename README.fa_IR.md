@@ -1,30 +1,87 @@
-[English](/README.md) | [فارسی](/README.fa_IR.md) | [العربية](/README.ar_EG.md) | [中文](/README.zh_CN.md) | [Español](/README.es_ES.md) | [Русский](/README.ru_RU.md) | [Türkçe](/README.tr_TR.md)
+# 3X-UI — فورک martynov-dev
 
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="./media/3x-ui-dark.png">
-    <img alt="3x-ui" src="./media/3x-ui-light.png">
-  </picture>
-</p>
+[English](README.md) | [فارسی](README.fa_IR.md) | [العربية](README.ar_EG.md) | [中文](README.zh_CN.md) | [Español](README.es_ES.md) | [Русский](README.ru_RU.md) | [Türkçe](README.tr_TR.md)
 
-<p align="center">
-  <a href="https://github.com/MHSanaei/3x-ui/releases"><img src="https://img.shields.io/github/v/release/mhsanaei/3x-ui" alt="Release"></a>
-  <a href="https://github.com/MHSanaei/3x-ui/actions"><img src="https://img.shields.io/github/actions/workflow/status/mhsanaei/3x-ui/release.yml.svg" alt="Build"></a>
-  <a href="#"><img src="https://img.shields.io/github/go-mod/go-version/mhsanaei/3x-ui.svg" alt="GO Version"></a>
-  <a href="https://github.com/MHSanaei/3x-ui/releases/latest"><img src="https://img.shields.io/github/downloads/mhsanaei/3x-ui/total.svg" alt="Downloads"></a>
-  <a href="https://www.gnu.org/licenses/gpl-3.0.en.html"><img src="https://img.shields.io/badge/license-GPL%20V3-blue.svg?longCache=true" alt="License"></a>
-  <a href="https://pkg.go.dev/github.com/mhsanaei/3x-ui/v3"><img src="https://pkg.go.dev/badge/github.com/mhsanaei/3x-ui/v3.svg" alt="Go Reference"></a>
-  <a href="https://docs.sanaei.dev"><img src="https://img.shields.io/badge/docs-docs.sanaei.dev-22d3ee" alt="Documentation"></a>
-</p>
+فورکی از [MHSanaei/3x-ui](https://github.com/MHSanaei/3x-ui)، پنل مدیریت Xray/VPN است. هدف آن حذف تبلیغات، پشتیبان‌گیری از پنل به همراه nginx و سایت پوششی VPN و تنظیم سایت از داخل پنل است.
 
-**3X-UI** یک پنل کنترل وب پیشرفته و متن‌باز برای مدیریت سرورهای [Xray-core](https://github.com/XTLS/Xray-core) است. این پنل یک رابط کاربری تمیز و چندزبانه برای استقرار، پیکربندی و نظارت بر طیف گسترده‌ای از پروتکل‌های پراکسی و VPN ارائه می‌دهد — از یک VPS تکی تا استقرارهای چندنودی.
-
-‏3X-UI که به‌عنوان یک فورک بهبودیافته از پروژه‌ی اصلی X-UI ساخته شده است، پشتیبانی گسترده‌تر از پروتکل‌ها، پایداری بهتر، حسابداری ترافیک به‌ازای هر کلاینت و بسیاری از ویژگی‌های رفاهی را اضافه می‌کند.
+مبنای این فورک **3X-UI v3.10.2** و کامیت [608ef4e4010bf83e2e78328e08f77efc051ad4d7](https://github.com/MHSanaei/3x-ui/commit/608ef4e4010bf83e2e78328e08f77efc051ad4d7) است. توسعهٔ فورک از این نسخهٔ پروژهٔ اصلی آغاز شده است.
 
 > [!IMPORTANT]
 > این پروژه فقط برای استفاده‌ی شخصی در نظر گرفته شده است. لطفاً از آن برای اهداف غیرقانونی یا در محیط تولید (production) استفاده نکنید.
 
-## ویژگی‌ها
+## تفاوت‌ها با پروژهٔ اصلی
+
+- تبلیغات حامیان، صفحهٔ حامیان و درخواست‌های دریافت تبلیغات حذف شده‌اند.
+- پشتیبان‌گیری کامل دستی و زمان‌بندی‌شده با فاصلهٔ زمانی، تعداد نسخه‌های محلی، مسیرهای اضافی و ارسال اختیاری به دستگاه دیگر از طریق SSH افزوده شده است.
+- ویرایش تنظیمات nginx و `index.html`، قالب HTTP، بررسی `nginx -t` و بازگردانی فایل‌ها در صورت خطای اعمال تغییرات افزوده شده است.
+- نصب و به‌روزرسانی پنل از انتشارهای **martynov-dev/3x-ui** استفاده می‌کند. تغییرات کد پروژهٔ اصلی جداگانه ادغام می‌شوند.
+
+## نصب و به‌روزرسانی
+
+پیش از نصب، انتشاری با فایل‌های اجرایی لازم و مجموع‌های کنترلی منتشر کنید. می‌توانید از GitHub Actions **Release 3X-UI** استفاده کنید یا فایل‌ها را دستی آماده و بارگذاری کنید. ساخت پیوستهٔ شاخهٔ `main` از برچسب `dev-latest` استفاده می‌کند:
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/martynov-dev/3x-ui/main/setup.sh) dev-latest
+```
+
+برای به‌روزرسانی نصب موجود به این فورک:
+
+```bash
+XUI_UPDATE_TAG=dev-latest bash <(curl -fsSL https://raw.githubusercontent.com/martynov-dev/3x-ui/main/update.sh)
+```
+
+پیش از به‌روزرسانی پشتیبان بگیرید. برچسب‌های پایدار باید در همین فورک منتشر شده باشند؛ انتشارهای پروژهٔ اصلی خودکار جایگزین نمی‌شوند. کانال Dev پنل نیز همین فورک را بررسی می‌کند.
+
+## پشتیبان‌گیری کامل
+
+در بخش پشتیبان‌ها و سایت، فاصلهٔ زمانی و تعداد نسخه‌های محلی را انتخاب و زمان‌بندی را فعال کنید. به‌صورت پیش‌فرض غیرفعال است، هنگام اجرای پنل کار می‌کند و هر دقیقه بررسی می‌شود. نخستین پشتیبان پس از فعال‌سازی و کار عقب‌افتاده پس از راه‌اندازی مجدد اجرا می‌شود.
+
+آرشیوها در `/etc/x-ui/full-backups` یا `$XUI_DB_FOLDER/full-backups` ذخیره می‌شوند؛ مجوز پوشه `0700` و آرشیو `0600` است. محتوا شامل تصویر سازگار SQLite در `database/x-ui.db` یا دامپ PostgreSQL در `database/x-ui.dump`، فایل‌های پنل و تنظیمات سرویس، مسیرهای انتخابی nginx/سایت/گواهی‌ها، مقصد پیوندهای نمادین و `manifest.json` با نسخه، تاریخ، منابع و مسیرهای مفقود است. مسیرهای ثابت nginx از طریق `nginx -T` نیز شناسایی می‌شوند.
+
+این پشتیبان برنامه است، نه تصویر سیستم‌عامل. گزارش‌ها، آرشیوهای قبلی و فایل‌های فعال SQLite WAL/SHM کنار گذاشته می‌شوند. مسیرهای دارای متغیر nginx و فایل‌های سرویس‌های دیگر را دستی اضافه کنید. خطای خواندن فایل موجود، پشتیبان‌گیری را متوقف می‌کند.
+
+برای ارسال با SSH، نشانی، درگاه، کاربر، پوشهٔ مقصد موجود و مسیر کلید خصوصی **روی سرور پنل** را وارد کنید. سرور پنل به `scp`، `ssh`، ورود با کلید و کلید تأییدشدهٔ مقصد در `known_hosts` نیاز دارد. مقصد باید سرور سازگار با scp و دستور POSIX `mv` داشته باشد؛ مانند Linux/WSL، روتر یا سرور دیگر. پوستهٔ بومی SSH ویندوز پشتیبانی نمی‌شود. نشانی خالی یعنی ذخیرهٔ محلی. نگهداری نسخه‌های راه‌دور در مقصد تنظیم می‌شود. ارسال ناقص پسوند `.partial` دارد؛ خطای ارسال نمایش داده می‌شود و نسخهٔ محلی باقی می‌ماند.
+
+آرشیو شامل رمزها و کلیدهای خصوصی است. SSH انتقال را رمزگذاری می‌کند؛ خود آرشیو روی دیسک رمزگذاری نشده است.
+
+### بازیابی
+
+در Ubuntu/Debian با SQLite، اسکریپت مشترک نصب و بازیابی را با root اجرا کنید. پشتیبان کامل Linux باید از همان معماری پردازنده و نسخهٔ توزیع باشد. اسکریپت آرشیو و SQLite را بررسی می‌کند، وابستگی‌ها را نصب و فایل اجرایی ذخیره‌شدهٔ پنل، پایگاه داده، nginx، سایت و گواهی‌ها را بازیابی و سرویس‌ها را اجرا می‌کند. نشانی پنل و اطلاعات ورود از پشتیبان حفظ می‌شوند. --check فقط بررسی می‌کند؛ --replace جایگزینی نصب موجود را صریحاً مجاز می‌کند. هنگام خطای اعمال، فایل‌ها بازگردانده می‌شوند؛ اگر بازگردانی شکست بخورد، فایل‌های قبلی در /var/backups/x-ui-restore-* می‌مانند. PostgreSQL و پشتیبان Docker فعلاً بازیابی دستی دارند. دیوارهٔ آتش خارجی، DNS و سرویس‌های خارجی بازیابی نمی‌شوند. فقط آرشیو قابل اعتماد را بازیابی کنید. پیش از استفاده از نشانی دانلود، اسکریپت باید در این فورک منتشر شود.
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/martynov-dev/3x-ui/main/setup.sh -o setup.sh
+
+sudo bash setup.sh --backup /root/full-backup.tar.gz --check
+
+sudo bash setup.sh --backup /root/full-backup.tar.gz
+```
+
+## سایت nginx
+
+nginx باید نصب و در حال اجرا باشد. یک پیکربندی شناسایی‌شده یا مسیری در `/etc/nginx` و پوشهٔ سایت در `/var/www` یا `/usr/share/nginx/html` انتخاب کنید. پیش از ویرایش، فایل‌های موجود را بارگذاری کنید. `nginx.conf` اصلی تغییر نمی‌کند.
+
+قالب HTTP روی درگاه 80 گوش می‌دهد؛ DNS را به سرور هدایت و دسترسی را باز کنید. HTTPS به گواهی‌های موجود و دستورهای مناسب نیاز دارد. برای Xray fallback، درگاه محلی سازگار را دستی تنظیم کنید. صدور گواهی و تنظیم ورودی Xray خودکار نیست.
+
+پیکربندی فعلی و جدید بررسی می‌شوند. خطای نوشتن، اعتبارسنجی یا reload فایل‌های قبلی را بازمی‌گرداند. تنظیمات `sites-available` به پیوند فعال `sites-enabled` یا `include` نیاز دارد. از تداخل دامنه و درگاه پرهیز کنید. فقط `index.html` ویرایش می‌شود؛ منابع دیگر روی دیسک می‌مانند و همراه پوشهٔ سایت پشتیبان‌گیری می‌شوند.
+
+## ادغام تغییرات پروژهٔ اصلی
+
+تغییرات محلی را کامیت کنید و با درخت کاری پاک شروع کنید. ریموت upstream را یک بار اضافه کنید، سپس تغییرات را دریافت و ادغام کنید:
+
+```bash
+git remote add upstream https://github.com/MHSanaei/3x-ui.git
+git fetch upstream
+git switch main
+git merge upstream/main
+```
+
+تعارض‌ها را حل کنید، بررسی‌های پروژه را اجرا و شاخه را به فورک خود ارسال کنید. ادغام تاریخچهٔ کامیت‌ها را حفظ می‌کند، اما سازگاری با تغییرات آینده نیازمند آزمایش است. شاخهٔ فورک را به upstream بازنشانی نکنید. به‌روزرسانی پنل در حال اجرا از انتشار فورک، مرحله‌ای جداگانه است.
+
+## راهنمای پنل پایه
+
+بخش‌های زیر اطلاعات کاربردی نسخهٔ پایه را حفظ می‌کنند. تغییرات فورک و دستورهای نصب آن در بالا آمده‌اند. تصویر کانتینر را محلی بسازید یا از همین فورک منتشر کنید؛ تصویر پروژهٔ اصلی تغییرات فورک را ندارد.
+
+### ویژگی‌ها
 
 - **اینباندهای چندپروتکلی** — VLESS، VMess، Trojan، Shadowsocks، WireGuard، AmneziaWG، TUIC v5، Hysteria2، MTProto، HTTP، SOCKS (Mixed)، Dokodemo-door / Tunnel و TUN.
 - **ترنسپورت‌ها و امنیت مدرن** — TCP (Raw)، mKCP، WebSocket، gRPC، HTTPUpgrade و XHTTP، ایمن‌شده با TLS، XTLS و REALITY.
@@ -44,7 +101,7 @@
 - **‏۱۳ زبان رابط کاربری** با تم‌های تیره و روشن.
 - **یکپارچگی با Fail2ban** برای اعمال محدودیت IP به‌ازای هر کلاینت.
 
-## اسکرین‌شات‌ها
+### اسکرین‌شات‌ها
 
 <details>
 <summary>برای باز شدن کلیک کنید</summary>
@@ -71,23 +128,7 @@
 
 </details>
 
-## شروع سریع
-
-```bash
-bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh)
-```
-
-برای نصب یک نسخه‌ی مشخص، تگ آن را در انتها اضافه کنید (مثلاً `v3.7.0`):
-
-```bash
-bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh) v3.7.0
-```
-
-برای نصب نسخه‌ی غلتانِ **dev** (آخرین پیش‌انتشار به‌ازای هر کامیت از شاخه‌ی `main`، نه یک انتشار پایدار)، مقدار `dev-latest` را پاس دهید:
-
-```bash
-bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh) dev-latest
-```
+### شروع سریع
 
 در حین نصب، یک نام کاربری، رمز عبور و مسیر دسترسی تصادفی تولید می‌شود. پس از نصب، دستور `x-ui` را اجرا کنید تا منوی مدیریت باز شود؛ در آنجا می‌توانید سرویس را شروع/متوقف کنید، اطلاعات ورود خود را ببینید یا بازنشانی کنید، گواهی‌های SSL را مدیریت کنید و کارهای دیگری انجام دهید.
 
@@ -95,7 +136,7 @@ bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.
 
 برای مستندات کامل — نصب، پیکربندی، بهره‌برداری و مرجع کامل API — به **[docs.sanaei.dev](https://docs.sanaei.dev/fa)** مراجعه کنید.
 
-### نصب بدون نظارت
+#### نصب بدون نظارت
 
 نصب‌کننده به‌صورت **غیرتعاملی** نیز برای cloud-init اجرا می‌شود.
 ‏`XUI_NONINTERACTIVE=1` را تنظیم کنید (یا بدون TTY از طریق pipe اجرا کنید) تا نصب به‌صورت سرتاسری و بدون
@@ -105,13 +146,13 @@ bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.
 - [user-data مربوط به Cloud-init](deploy/cloud-init/) — نصب بدون نظارت روی هر ابری (Hetzner/AWS/DO/Vultr/GCP/Azure/Oracle)
 - [یادداشت‌های Hetzner Cloud](deploy/marketplace/hetzner/) — استقرار مبتنی بر cloud-init روی Hetzner
 
-## پلتفرم‌های پشتیبانی‌شده
+### پلتفرم‌های پشتیبانی‌شده
 
 **سیستم‌عامل‌ها:** Ubuntu، Debian، Armbian، Fedora، CentOS، RHEL، AlmaLinux، Rocky Linux، Oracle Linux، Amazon Linux، Virtuozzo، Arch، Manjaro، Parch، openSUSE (Tumbleweed / Leap)، Alpine و Windows.
 
 **معماری‌ها:** `amd64` · `386` · `arm64` (aarch64) · `armv7` · `armv6` · `armv5` · `s390x`.
 
-## گزینه‌های پایگاه‌داده
+### گزینه‌های پایگاه‌داده
 
 ‏3X-UI از دو بک‌اند پشتیبانی می‌کند که در حین نصب انتخاب می‌شوند:
 
@@ -125,7 +166,7 @@ XUI_DB_TYPE=postgres
 XUI_DB_DSN=postgres://xui:password@127.0.0.1:5432/xui?sslmode=disable
 ```
 
-### انتقال یک نصب موجود SQLite به PostgreSQL
+#### انتقال یک نصب موجود SQLite به PostgreSQL
 
 ```bash
 x-ui migrate-db --dsn "postgres://xui:password@127.0.0.1:5432/xui?sslmode=disable"
@@ -135,7 +176,7 @@ systemctl restart x-ui
 
 فایل اصلی SQLite دست‌نخورده باقی می‌ماند؛ پس از اطمینان از صحت بک‌اند جدید، آن را به‌صورت دستی حذف کنید.
 
-### Docker
+#### Docker
 
 دستور پیش‌فرض `docker compose up -d` همچنان از SQLite استفاده می‌کند. برای اجرا با سرویس PostgreSQL همراه، دو خط متغیر محیطی `XUI_DB_*` را در `docker-compose.yml` از حالت کامنت خارج کنید و با پروفایل زیر اجرا کنید:
 
@@ -146,10 +187,10 @@ docker compose --profile postgres up -d
 این ایمیج، Fail2ban را (که به‌صورت پیش‌فرض فعال است) برای اعمال **محدودیت‌های IP** به‌ازای هر کلاینت همراه دارد. ‏Fail2ban متخلفان را با `iptables` مسدود می‌کند که به مجوز `NET_ADMIN` نیاز دارد. فایل `docker-compose.yml` این مجوز را از قبل از طریق `cap_add` می‌دهد؛ اگر به‌جای آن کانتینر را با `docker run` اجرا می‌کنید، خودتان مجوزها را اضافه کنید، در غیر این صورت مسدودسازی‌ها فقط ثبت می‌شوند اما هرگز اعمال نمی‌شوند:
 
 ```bash
-docker run -d --cap-add=NET_ADMIN --cap-add=NET_RAW ... ghcr.io/mhsanaei/3x-ui
+docker run -d --cap-add=NET_ADMIN --cap-add=NET_RAW ... ghcr.io/martynov-dev/3x-ui
 ```
 
-## متغیرهای محیطی
+### متغیرهای محیطی
 
 | متغیر | توضیحات | پیش‌فرض |
 | --- | --- | --- |
@@ -175,57 +216,23 @@ docker run -d --cap-add=NET_ADMIN --cap-add=NET_RAW ... ghcr.io/mhsanaei/3x-ui
 
 فهرست کامل در [مرجع متغیرهای محیطی](https://docs.sanaei.dev/fa/docs/reference/env-vars) موجود است.
 
-## زبان‌های پشتیبانی‌شده
+### زبان‌های پشتیبانی‌شده
 
 رابط کاربری پنل به ۱۳ زبان در دسترس است:
 
 English · فارسی · العربية · 中文（简体） · 中文（繁體） · Español · Русский · Українська · Türkçe · Tiếng Việt · 日本語 · Bahasa Indonesia · Português (Brasil)
 
-## مشارکت
+### مشارکت
 
 از مشارکت‌ها استقبال می‌شود. لطفاً پیش از باز کردن issue یا pull request، [راهنمای مشارکت](/CONTRIBUTING.md) را مطالعه کنید.
 
-## تشکر ویژه از
-
-- [alireza0](https://github.com/alireza0/)
-
-## قدردانی
-
-- [Iran v2ray rules](https://github.com/chocolate4u/Iran-v2ray-rules) (مجوز: **GPL-3.0**): _قوانین مسیریابی بهبود یافته v2ray/xray و v2ray/xray-clients با دامنه‌های ایرانی داخلی و تمرکز بر امنیت و مسدود کردن تبلیغات._
-- [Russia v2ray rules](https://github.com/runetfreedom/russia-v2ray-rules-dat) (مجوز: **GPL-3.0**): _این مخزن شامل قوانین مسیریابی V2Ray به‌روزرسانی شده خودکار بر اساس داده‌های دامنه‌ها و آدرس‌های مسدود شده در روسیه است._
-
-## ابزارهای جامعه
+### ابزارهای جامعه
 
 ابزارها و یکپارچه‌سازی‌هایی که توسط جامعه پیرامون 3x-ui ساخته شده‌اند.
 
 - [terraform-provider-3x-ui](https://github.com/batonogov/terraform-provider-threexui) (مجوز: **MIT**): _مدیریت اینباندها، کلاینت‌ها، تنظیمات پنل و پیکربندی Xray به‌صورت کد با Terraform / OpenTofu._
 - [3X-UI Manager](https://github.com/yukh975/3X-UI-Manager) (مجوز: **MIT**): _کلاینت بومی اندروید برای 3x-ui — داشبورد، اینباندها، کلاینت‌ها با اشتراک‌گذاری QR، نودها و مدیریت چند پنل. در F-Droid در دسترس است._
 
-## پشتیبانی از پروژه
+## منبع و مجوز
 
-**اگر این پروژه برای شما مفید است، می‌توانید به آن یک**:star2: بدهید
-
-<a href="https://www.buymeacoffee.com/MHSanaei" target="_blank">
-<img src="./media/default-yellow.png" alt="Buy Me A Coffee" style="height: 70px !important;width: 277px !important;" >
-</a>
-
-</br>
-<a href="https://nowpayments.io/donation/hsanaei" target="_blank" rel="noreferrer noopener">
-   <img src="./media/donation-button-black.svg" alt="Crypto donation button by NOWPayments">
-</a>
-
-## تاریخچه ستاره‌ها
-
-<a href="https://www.star-history.com/?repos=mhsanaei%2F3x-ui&type=date&legend=top-left">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=mhsanaei/3x-ui&type=date&theme=dark&legend=top-left" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=mhsanaei/3x-ui&type=date&legend=top-left" />
-   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=mhsanaei/3x-ui&type=date&legend=top-left" />
- </picture>
-</a>
-
-<p align="center">
- <a href="https://www.star-history.com/mhsanaei/3x-ui">
-  <picture><source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/badge?repo=MHSanaei/3x-ui&type=rank&theme=dark" /><source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/badge?repo=MHSanaei/3x-ui&type=rank" /><img alt="Star History Rank" src="https://api.star-history.com/badge?repo=MHSanaei/3x-ui&type=rank" /></picture> <picture><source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/badge?repo=MHSanaei/3x-ui&type=trending&theme=dark" /><source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/badge?repo=MHSanaei/3x-ui&type=trending" /><img alt="GitHub Trending Repository of the Day" src="https://api.star-history.com/badge?repo=MHSanaei/3x-ui&type=trending" /></picture>
- </a>
-</p>
+پروژهٔ اصلی: [MHSanaei/3x-ui](https://github.com/MHSanaei/3x-ui). مجوز: [GPL-3.0](LICENSE). نام مؤلفان اصلی حفظ می‌شود. نام ماژول Go برای سازگاری کد بدون تغییر باقی می‌ماند. مستندات عمومی: [docs.sanaei.dev](https://docs.sanaei.dev).

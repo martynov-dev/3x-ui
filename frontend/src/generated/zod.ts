@@ -605,6 +605,34 @@ export const FallbackParentInfoSchema = z.object({
 });
 export type FallbackParentInfo = z.infer<typeof FallbackParentInfoSchema>;
 
+export const FullBackupFileSchema = z.object({
+  modified: z.string(),
+  name: z.string(),
+  size: z.number().int(),
+});
+export type FullBackupFile = z.infer<typeof FullBackupFileSchema>;
+
+export const FullBackupSettingsSchema = z.object({
+  enabled: z.boolean(),
+  identityFile: z.string(),
+  intervalHours: z.number().int(),
+  keep: z.number().int(),
+  paths: z.array(z.string()),
+  remoteHost: z.string(),
+  remotePath: z.string(),
+  remotePort: z.number().int(),
+  remoteUser: z.string(),
+});
+export type FullBackupSettings = z.infer<typeof FullBackupSettingsSchema>;
+
+export const FullBackupStatusSchema = z.object({
+  error: z.string(),
+  file: z.string(),
+  lastAttempt: z.string(),
+  lastSuccess: z.string(),
+});
+export type FullBackupStatus = z.infer<typeof FullBackupStatusSchema>;
+
 export const GeoCategorySchema = z.object({
   attributes: z.array(z.string()),
   code: z.string(),
@@ -862,6 +890,14 @@ export const NewUUIDResponseSchema = z.object({
 });
 export type NewUUIDResponse = z.infer<typeof NewUUIDResponseSchema>;
 
+export const NginxSiteSchema = z.object({
+  config: z.string(),
+  configPath: z.string(),
+  html: z.string(),
+  root: z.string(),
+});
+export type NginxSite = z.infer<typeof NginxSiteSchema>;
+
 export const NodeSchema = z.object({
   activeCount: z.number().int(),
   address: z.string(),
@@ -1088,26 +1124,6 @@ export const SettingSchema = z.object({
   value: z.string(),
 });
 export type Setting = z.infer<typeof SettingSchema>;
-
-export const SponsorSchema = z.object({
-  enable: z.boolean().nullable().optional(),
-  from: z.string().nullable().optional(),
-  id: z.string(),
-  link: z.string(),
-  logo: z.string().optional(),
-  name: z.string(),
-  slots: z.array(z.string()),
-  text: z.record(z.string(), z.string()),
-  title: z.record(z.string(), z.string()),
-  until: z.string(),
-});
-export type Sponsor = z.infer<typeof SponsorSchema>;
-
-export const SponsorListSchema = z.object({
-  contact: z.string().optional(),
-  sponsors: z.array(z.lazy(() => SponsorSchema)),
-});
-export type SponsorList = z.infer<typeof SponsorListSchema>;
 
 export const SubBalancerSchema = z.object({
   createdAt: z.number().int(),

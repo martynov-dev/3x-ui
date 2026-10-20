@@ -15,6 +15,7 @@
     "hosts",
     "nodes",
     "backup",
+    "backups-and-nginx-website",
     "websocket"
   ]
 }

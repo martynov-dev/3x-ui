@@ -614,6 +614,30 @@ export const EXAMPLES: Record<string, unknown> = {
     "masterId": 0,
     "path": ""
   },
+  "FullBackupFile": {
+    "modified": "2025-01-01T00:00:00Z",
+    "name": "",
+    "size": 0
+  },
+  "FullBackupSettings": {
+    "enabled": false,
+    "identityFile": "",
+    "intervalHours": 0,
+    "keep": 0,
+    "paths": [
+      ""
+    ],
+    "remoteHost": "",
+    "remotePath": "",
+    "remotePort": 0,
+    "remoteUser": ""
+  },
+  "FullBackupStatus": {
+    "error": "",
+    "file": "",
+    "lastAttempt": "2025-01-01T00:00:00Z",
+    "lastSuccess": "2025-01-01T00:00:00Z"
+  },
   "GeoCategory": {
     "attributes": [
       "ads",
@@ -890,6 +914,12 @@ export const EXAMPLES: Record<string, unknown> = {
   "NewUUIDResponse": {
     "uuid": "550e8400-e29b-41d4-a716-446655440000"
   },
+  "NginxSite": {
+    "config": "",
+    "configPath": "",
+    "html": "",
+    "root": ""
+  },
   "Node": {
     "activeCount": 23,
     "address": "node1.example.com",
@@ -1104,39 +1134,6 @@ export const EXAMPLES: Record<string, unknown> = {
     "id": 0,
     "key": "",
     "value": ""
-  },
-  "Sponsor": {
-    "enable": true,
-    "from": "2026-10-01T00:00:00Z",
-    "id": "acme-2026-10",
-    "link": "https://acme.example/?utm_source=3x-ui",
-    "logo": "/sponsors/logo/acme.png",
-    "name": "Acme VPS",
-    "slots": [
-      ""
-    ],
-    "text": {},
-    "title": {},
-    "until": "2026-11-01T00:00:00Z"
-  },
-  "SponsorList": {
-    "contact": "https://t.me/example",
-    "sponsors": [
-      {
-        "enable": true,
-        "from": "2026-10-01T00:00:00Z",
-        "id": "acme-2026-10",
-        "link": "https://acme.example/?utm_source=3x-ui",
-        "logo": "/sponsors/logo/acme.png",
-        "name": "Acme VPS",
-        "slots": [
-          ""
-        ],
-        "text": {},
-        "title": {},
-        "until": "2026-11-01T00:00:00Z"
-      }
-    ]
   },
   "SubBalancer": {
     "createdAt": 1710000000000,

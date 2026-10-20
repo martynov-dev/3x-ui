@@ -1,0 +1,42 @@
+# Isolated disposable test data; no bind mounts from the production compose file.
+services:
+  panel:
+    image: fork-3x-ui:integration
+    build:
+      context: .
+      dockerfile: scripts/docker-test/Dockerfile
+    entrypoint: ["/bin/sh", "/test/panel.sh"]
+    environment:
+      XUI_ENABLE_FAIL2BAN: "false"
+      XUI_IN_DOCKER: "true"
+      XUI_MAIN_FOLDER: /app
+      TZ: UTC
+    ports:
+      - "127.0.0.1:12053:2053"
+      - "127.0.0.1:18080:80"
+    volumes:
+      - panel-data:/etc/x-ui
+      - website:/var/www
+      - nginx:/etc/nginx
+      - ssh-keys:/root/.ssh:ro
+    depends_on:
+      backup-target:
+        condition: service_healthy
+  backup-target:
+    image: fork-3x-ui:integration
+    pull_policy: never
+    entrypoint: ["/bin/sh", "/test/receiver.sh"]
+    volumes:
+      - ssh-keys:/test-ssh
+      - remote-backups:/srv/backups
+    healthcheck:
+      test: ["CMD", "test", "-f", "/test-ssh/ready"]
+      interval: 2s
+      timeout: 2s
+      retries: 20
+volumes:
+  panel-data:
+  ssh-keys:
+  remote-backups:
+  website:
+  nginx:

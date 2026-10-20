@@ -198,6 +198,82 @@ const hwidStatusErrorResponses = {
 
 export const sections: readonly Section[] = [
   {
+    id: 'maintenance',
+    title: 'Backups and nginx website',
+    description:
+      'Fork maintenance API. Requires an admin session or admin token; browser mutations require CSRF. Full archives contain secrets.',
+    endpoints: [
+      {
+        method: 'GET',
+        path: '/panel/api/maintenance/backups',
+        summary:
+          'Get settings, last run status and local archives. Automatic backups are disabled until configured.',
+        responseObjectSchema: {
+          type: 'object',
+          properties: {
+            settings: { $ref: '#/components/schemas/FullBackupSettings' },
+            status: { $ref: '#/components/schemas/FullBackupStatus' },
+            files: { type: 'array', items: { $ref: '#/components/schemas/FullBackupFile' } },
+          },
+        },
+      },
+      {
+        method: 'POST',
+        path: '/panel/api/maintenance/backups/settings',
+        summary:
+          'Save interval (hours), local retention, extra source paths and optional SSH destination. Empty remoteHost means local storage only. SSH requires verified known_hosts, key authentication and a POSIX remote shell. Remote retention is external.',
+        requestSchema: { $ref: '#/components/schemas/FullBackupSettings' },
+      },
+      {
+        method: 'POST',
+        path: '/panel/api/maintenance/backups/run',
+        summary:
+          'Create an archive and optionally upload it. Synchronous; allow up to 30 minutes. Failed uploads retain the local archive and record an error.',
+        responseSchema: 'FullBackupStatus',
+      },
+      {
+        method: 'GET',
+        path: '/panel/api/maintenance/backups/download/:name',
+        summary:
+          'Download an existing full archive. Restore manually; database import does not accept full archives.',
+        params: [{ name: 'name', in: 'path', type: 'string' }],
+        responses: {
+          '200': {
+            description: 'Archive',
+            content: { 'application/gzip': { schema: { type: 'string', format: 'binary' } } },
+          },
+          '404': { description: 'Invalid or missing archive' },
+        },
+      },
+      {
+        method: 'GET',
+        path: '/panel/api/maintenance/nginx',
+        summary:
+          'Read site configuration and index.html. Defaults to saved paths. Config is restricted to /etc/nginx except nginx.conf; root to /var/www or /usr/share/nginx/html.',
+        params: [
+          { name: 'configPath', in: 'query', type: 'string', optional: true },
+          { name: 'root', in: 'query', type: 'string', optional: true },
+        ],
+        responseSchema: 'NginxSite',
+      },
+      {
+        method: 'GET',
+        path: '/panel/api/maintenance/nginx/sites',
+        summary:
+          'Discover enabled site files and document roots using nginx -T without modifying them.',
+        responseSchema: 'NginxSite',
+        responseSchemaArray: true,
+      },
+      {
+        method: 'POST',
+        path: '/panel/api/maintenance/nginx',
+        summary:
+          'Write configuration and index.html, test with nginx -t and reload. Restore old files on write/test/reload command failure. Requires installed, running nginx. Does not issue certificates or change Xray fallbacks.',
+        requestSchema: { $ref: '#/components/schemas/NginxSite' },
+      },
+    ],
+  },
+  {
     id: 'authentication',
     title: 'Authentication',
     description:
@@ -235,13 +311,6 @@ export const sections: readonly Section[] = [
         summary:
           'Mint a CSRF token for the current session. The SPA replays it in the X-CSRF-Token header on unsafe requests. Bearer-token callers can skip this — the middleware short-circuits CSRF for authenticated API requests.',
         response: '{\n  "success": true,\n  "obj": "csrf-token-string"\n}',
-      },
-      {
-        method: 'GET',
-        path: '/sponsors',
-        summary:
-          'Public. Active paid sponsor placements read from the project sponsors.json (cached for 1h); entries outside their from/until window are dropped. Logos are proxied by the panel at /sponsors/logo/{name}. Used by the login page and panel sponsor slots.',
-        responseSchema: 'SponsorList',
       },
       {
         method: 'POST',

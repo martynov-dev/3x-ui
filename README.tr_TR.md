@@ -1,30 +1,87 @@
-[English](/README.md) | [فارسی](/README.fa_IR.md) | [العربية](/README.ar_EG.md) | [中文](/README.zh_CN.md) | [Español](/README.es_ES.md) | [Русский](/README.ru_RU.md) | [Türkçe](/README.tr_TR.md)
+# 3X-UI — martynov-dev çatalı
 
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="./media/3x-ui-dark.png">
-    <img alt="3x-ui" src="./media/3x-ui-light.png">
-  </picture>
-</p>
+[English](README.md) | [فارسی](README.fa_IR.md) | [العربية](README.ar_EG.md) | [中文](README.zh_CN.md) | [Español](README.es_ES.md) | [Русский](README.ru_RU.md) | [Türkçe](README.tr_TR.md)
 
-<p align="center">
-  <a href="https://github.com/MHSanaei/3x-ui/releases"><img src="https://img.shields.io/github/v/release/mhsanaei/3x-ui" alt="Release"></a>
-  <a href="https://github.com/MHSanaei/3x-ui/actions"><img src="https://img.shields.io/github/actions/workflow/status/mhsanaei/3x-ui/release.yml.svg" alt="Build"></a>
-  <a href="#"><img src="https://img.shields.io/github/go-mod/go-version/mhsanaei/3x-ui.svg" alt="GO Version"></a>
-  <a href="https://github.com/MHSanaei/3x-ui/releases/latest"><img src="https://img.shields.io/github/downloads/mhsanaei/3x-ui/total.svg" alt="Downloads"></a>
-  <a href="https://www.gnu.org/licenses/gpl-3.0.en.html"><img src="https://img.shields.io/badge/license-GPL%20V3-blue.svg?longCache=true" alt="License"></a>
-  <a href="https://pkg.go.dev/github.com/mhsanaei/3x-ui/v3"><img src="https://pkg.go.dev/badge/github.com/mhsanaei/3x-ui/v3.svg" alt="Go Reference"></a>
-  <a href="https://docs.sanaei.dev"><img src="https://img.shields.io/badge/docs-docs.sanaei.dev-22d3ee" alt="Documentation"></a>
-</p>
+[MHSanaei/3x-ui](https://github.com/MHSanaei/3x-ui) Xray/VPN yönetim panelinin bir çatalıdır. Amacı reklamları kaldırmak, paneli nginx ve VPN örtü sitesiyle birlikte yedeklemek ve siteyi panelden yapılandırmaktır.
 
-**3X-UI**, [Xray-core](https://github.com/XTLS/Xray-core) sunucularını yönetmek için geliştirilmiş profesyonel, açık kaynaklı bir web kontrol panelidir. Tek bir sanal sunucudan (VPS) çok düğümlü (multi-node) dağıtımlara kadar çok çeşitli proxy ve VPN protokollerini kurmak, yapılandırmak ve izlemek için temiz, çok dilli bir arayüz sağlar.
-
-Orijinal X-UI projesinin geliştirilmiş bir çatallaması (fork) olarak inşa edilen 3X-UI; çok daha geniş protokol desteği, artırılmış kararlılık, kullanıcı başına trafik hesaplama ve kullanım kolaylığı sağlayan birçok yeni özellik sunar.
+Temel sürüm **3X-UI v3.10.2**, commit [608ef4e4010bf83e2e78328e08f77efc051ad4d7](https://github.com/MHSanaei/3x-ui/commit/608ef4e4010bf83e2e78328e08f77efc051ad4d7). Çatalın geliştirilmesine bu özgün sürümden başlanmıştır.
 
 > [!IMPORTANT]
 > Bu proje yalnızca kişisel kullanım için tasarlanmıştır. Lütfen yasadışı amaçlar için veya üretim (production) ortamında kullanmayın.
 
-## Özellikler
+## Özgün projeden farkları
+
+- Sponsor reklamları, sponsor sayfası ve reklam yükleme istekleri kaldırıldı.
+- Aralık, yerel saklama sayısı, ek yollar ve başka bir cihaza isteğe bağlı SSH aktarımı ayarlanabilen elle ve zamanlanmış tam yedekler eklendi.
+- nginx yapılandırması ve `index.html` düzenleyicisi, HTTP şablonu, `nginx -t` doğrulaması ve uygulama hatasında dosyaları geri alma eklendi.
+- Kurulum ve panel güncellemeleri **martynov-dev/3x-ui** sürümlerini kullanır. Özgün kaynak değişiklikleri ayrı bir birleştirmeyle alınır.
+
+## Kurulum ve güncelleme
+
+Kurulumdan önce gerekli ikili dosyaları ve sağlama toplamlarını içeren bir sürüm yayımlayın. GitHub Actions **Release 3X-UI** kullanabilir veya dosyaları elle hazırlayıp yükleyebilirsiniz. `main` dalının sürekli derlemesi `dev-latest` etiketini kullanır:
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/martynov-dev/3x-ui/main/setup.sh) dev-latest
+```
+
+Mevcut kurulumu bu çatala güncellemek için:
+
+```bash
+XUI_UPDATE_TAG=dev-latest bash <(curl -fsSL https://raw.githubusercontent.com/martynov-dev/3x-ui/main/update.sh)
+```
+
+Güncellemeden önce yedek alın. Kararlı etiketler bu çatalda bulunmalıdır; özgün sürümler otomatik kullanılmaz. Panelin Dev kanalı da bu çatalı kontrol eder.
+
+## Tam yedekler
+
+Yedekler ve site bölümünde aralığı ve yerel kopya sayısını seçip zamanlamayı etkinleştirin. Varsayılan olarak kapalıdır, panel çalışırken işler ve dakikada bir kontrol edilir. İlk yedek etkinleştirmeden sonra, geciken işler yeniden başlatmadan sonra çalışır.
+
+Arşivler `/etc/x-ui/full-backups` veya `$XUI_DB_FOLDER/full-backups` altında saklanır (dizin `0700`, arşivler `0600`). Tutarlı SQLite görüntüsü (`database/x-ui.db`) veya PostgreSQL dökümü (`database/x-ui.dump`), panel dosyaları ve servis ayarları, seçilen nginx/site/sertifika yolları, sembolik bağlantı hedefleri ve sürüm, tarih, kaynaklar ile eksik yolları içeren `manifest.json` bulunur. Statik nginx yolları `nginx -T` ile de keşfedilir.
+
+Bu, uygulama yedeğidir; işletim sistemi imajı değildir. Günlükler, eski arşivler ve etkin SQLite WAL/SHM dosyaları hariç tutulur. nginx değişkenli yolları ve diğer servis dosyalarını elle ekleyin. Var olan bir dosyanın okunamaması yedeği durdurur.
+
+SSH aktarımı için adres, port, kullanıcı, mevcut hedef dizin ve **panel sunucusundaki** özel anahtar yolunu belirtin. Panel sunucusunda `scp`, `ssh`, anahtarla giriş ve `known_hosts` içinde doğrulanmış hedef gerekir. Hedefte scp uyumlu sunucu ve POSIX `mv` gerekir (Linux/WSL, yönlendirici veya başka bir sunucu); yerel Windows SSH kabuğu desteklenmez. Adres boşsa yalnızca yerel yedek alınır. Uzak saklama politikasını hedefte ayarlayın. Tamamlanmamış aktarımlar `.partial` ile biter; hatalar gösterilir ve yerel arşiv korunur.
+
+Arşivlerde parolalar ve özel anahtarlar bulunur. SSH aktarımı şifreler; diskteki arşiv şifreli değildir.
+
+### Geri yükleme
+
+Ubuntu/Debian ve SQLite için root olarak aynı kurulum ve geri yükleme betiğini kullanın. Tam Linux yedeği aynı işlemci mimarisi ve dağıtım sürümünden olmalıdır. Betik arşivi ve SQLite görüntüsünü doğrular, bağımlılıkları kurar, arşivdeki paneli, veritabanını, nginx’i, siteyi ve sertifikaları geri yükleyip servisleri başlatır. Panel adresi ve giriş bilgileri yedekten gelir. --check uygulamadan kontrol eder; --replace mevcut kurulumun değiştirilmesine açıkça izin verir. Uygulama hatasında dosyalar geri alınır; geri alma başarısızsa eski dosyalar /var/backups/x-ui-restore-* altında korunur. PostgreSQL ve Docker yedekleri şimdilik elle geri yüklenir. Harici güvenlik duvarı, DNS ve harici servisler geri yüklenmez. Yalnızca güvenilir arşivleri kullanın. URL kullanılmadan önce betik bu çatalda yayımlanmalıdır.
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/martynov-dev/3x-ui/main/setup.sh -o setup.sh
+
+sudo bash setup.sh --backup /root/full-backup.tar.gz --check
+
+sudo bash setup.sh --backup /root/full-backup.tar.gz
+```
+
+## nginx sitesi
+
+nginx kurulu ve çalışıyor olmalıdır. Bulunan bir yapılandırmayı ya da `/etc/nginx` altında bir yol ve `/var/www` veya `/usr/share/nginx/html` altında bir site dizini seçin. Düzenlemeden önce mevcut dosyaları yükleyin. Ana `nginx.conf` değiştirilmez.
+
+HTTP şablonu 80 portunu dinler; DNS kaydını sunucuya yönlendirin ve erişim açın. HTTPS için mevcut sertifikalar ve uygun yönergeler gerekir. Xray fallback için uyumlu yerel portu elle ayarlayın. Sertifika üretimi ve Xray inbound yapılandırması otomatik değildir.
+
+Mevcut ve yeni yapılandırmalar doğrulanır. Yazma, doğrulama veya reload hatasında önceki dosyalar geri getirilir. `sites-available` yapılandırması için etkin `sites-enabled` bağlantısı veya `include` gerekir. Alan adı/port çakışmalarından kaçının. Yalnızca `index.html` düzenlenir; diğer kaynaklar diskte kalır ve site diziniyle yedeklenir.
+
+## Özgün değişiklikleri birleştirme
+
+Yerel değişiklikleri commit edin ve temiz çalışma ağacıyla başlayın. upstream uzak deposunu bir kez ekleyin, sonra değişiklikleri alıp birleştirin:
+
+```bash
+git remote add upstream https://github.com/MHSanaei/3x-ui.git
+git fetch upstream
+git switch main
+git merge upstream/main
+```
+
+Çakışmaları çözün, proje kontrollerini çalıştırın ve dalı çatalınıza gönderin. Birleştirme commit geçmişini korur, ancak gelecekteki özgün değişikliklerle uyumluluk test gerektirir. Çatal dalını upstream’e sıfırlamayın. Çalışan paneli çatal sürümünden güncellemek ayrı bir adımdır.
+
+## Temel panel başvurusu
+
+Aşağıdaki bölümler temel sürümün yararlı başvuru bilgilerini korur. Çatalın değişiklikleri ve kurulum komutları yukarıdadır. Konteyner imajlarını yerel olarak derleyin veya bu çataldan yayımlayın; özgün imaj çatalın değişikliklerini içermez.
+
+### Özellikler
 
 - **Çoklu protokol destekli gelen bağlantılar (Inbounds)** — VLESS, VMess, Trojan, Shadowsocks, WireGuard, AmneziaWG, TUIC v5, Hysteria2, MTProto, HTTP, SOCKS (Karma), Dokodemo-door / Tunnel ve TUN.
 - **Modern aktarımlar (transports) ve güvenlik** — TCP (Raw), mKCP, WebSocket, gRPC, HTTPUpgrade ve XHTTP; TLS, XTLS ve REALITY ile güvene alınmıştır.
@@ -44,7 +101,7 @@ Orijinal X-UI projesinin geliştirilmiş bir çatallaması (fork) olarak inşa e
 - Koyu ve açık tema seçenekleriyle **13 farklı UI dili**.
 - Kullanıcı başına IP limitlerini zorunlu kılmak için **Fail2ban entegrasyonu**.
 
-## Ekran Görüntüleri
+### Ekran Görüntüleri
 
 <details>
 <summary>Genişletmek için tıklayın</summary>
@@ -71,23 +128,7 @@ Orijinal X-UI projesinin geliştirilmiş bir çatallaması (fork) olarak inşa e
 
 </details>
 
-## Hızlı Başlangıç
-
-```bash
-bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh)
-```
-
-Belirli bir sürümü kurmak için, etiketini (ör. `v3.7.0`) ekleyin:
-
-```bash
-bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh) v3.7.0
-```
-
-Sürekli güncellenen **dev** sürümünü (kararlı bir sürüm değil; `main` dalından her commit'te oluşturulan en son ön sürüm) kurmak için `dev-latest` değerini geçirin:
-
-```bash
-bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh) dev-latest
-```
+### Hızlı Başlangıç
 
 Kurulum sırasında rastgele bir kullanıcı adı, şifre ve erişim yolu oluşturulur. Kurulumdan sonra, hizmeti başlatabileceğiniz/durdurabileceğiniz, giriş bilgilerinizi görüntüleyebileceğiniz veya sıfırlayabileceğiniz, SSL sertifikalarını yönetebileceğiniz ve çok daha fazlasını yapabileceğiniz yönetim menüsünü açmak için terminalde `x-ui` komutunu çalıştırın.
 
@@ -95,7 +136,7 @@ Her yayın dosyası, yanında bir `.sha256` sağlama toplamıyla birlikte yayım
 
 Tam dokümantasyon — kurulum, yapılandırma, işletim ve eksiksiz API referansı — için **[docs.sanaei.dev](https://docs.sanaei.dev)** adresini ziyaret edin.
 
-### Etkileşimsiz kurulum
+#### Etkileşimsiz kurulum
 
 Yükleyici, cloud-init için **etkileşimsiz** olarak da çalışır.
 `XUI_NONINTERACTIVE=1` ayarlayın (veya TTY olmadan boru hattına aktarın); kurulum baştan
@@ -105,13 +146,13 @@ sona hiçbir soru sormadan tamamlanır, rastgele kimlik bilgileri oluşturup bun
 - [Cloud-init user-data](deploy/cloud-init/) — herhangi bir bulutta etkileşimsiz kurulum (Hetzner/AWS/DO/Vultr/GCP/Azure/Oracle)
 - [Hetzner Cloud notları](deploy/marketplace/hetzner/) — Hetzner üzerinde cloud-init tabanlı dağıtım
 
-## Desteklenen Platformlar
+### Desteklenen Platformlar
 
 **İşletim sistemleri:** Ubuntu, Debian, Armbian, Fedora, CentOS, RHEL, AlmaLinux, Rocky Linux, Oracle Linux, Amazon Linux, Virtuozzo, Arch, Manjaro, Parch, openSUSE (Tumbleweed / Leap), Alpine ve Windows.
 
 **Mimariler:** `amd64` · `386` · `arm64` (aarch64) · `armv7` · `armv6` · `armv5` · `s390x`.
 
-## Veritabanı Seçenekleri
+### Veritabanı Seçenekleri
 
 3X-UI kurulum sırasında seçilebilecek iki arka uç (backend) destekler:
 
@@ -125,7 +166,7 @@ XUI_DB_TYPE=postgres
 XUI_DB_DSN=postgres://xui:password@127.0.0.1:5432/xui?sslmode=disable
 ```
 
-### Mevcut bir SQLite Kurulumunu PostgreSQL'e Taşıma
+#### Mevcut bir SQLite Kurulumunu PostgreSQL'e Taşıma
 
 ```bash
 x-ui migrate-db --dsn "postgres://xui:password@127.0.0.1:5432/xui?sslmode=disable"
@@ -135,7 +176,7 @@ systemctl restart x-ui
 
 Kaynak SQLite dosyasına dokunulmaz; yeni veritabanının düzgün çalıştığını doğruladıktan sonra eski SQLite dosyasını manuel olarak silebilirsiniz.
 
-### Docker
+#### Docker
 
 Varsayılan `docker compose up -d` komutu SQLite kullanmaya devam eder. Birlikte paketlenmiş PostgreSQL servisi ile çalıştırmak için, `docker-compose.yml` dosyasındaki iki `XUI_DB_*` değişken satırının yorumunu kaldırın ve profille başlatın:
 
@@ -146,10 +187,10 @@ docker compose --profile postgres up -d
 Docker imajı, kullanıcı başına **IP limitlerini** zorunlu kılmak için Fail2ban ile (varsayılan olarak etkindir) paketlenmiştir. Fail2ban, ihlalcileri `iptables` ile engeller ve bunun için `NET_ADMIN` yetkisine ihtiyaç duyar. `docker-compose.yml` bunu zaten `cap_add` üzerinden vermektedir; ancak konteyneri bunun yerine `docker run` ile başlatırsanız bu yetkileri kendiniz eklemelisiniz, aksi takdirde yasaklamalar günlüğe kaydedilir ancak uygulanmaz:
 
 ```bash
-docker run -d --cap-add=NET_ADMIN --cap-add=NET_RAW ... ghcr.io/mhsanaei/3x-ui
+docker run -d --cap-add=NET_ADMIN --cap-add=NET_RAW ... ghcr.io/martynov-dev/3x-ui
 ```
 
-## Ortam Değişkenleri (Environment Variables)
+### Ortam Değişkenleri (Environment Variables)
 
 | Değişken | Açıklama | Varsayılan |
 | --- | --- | --- |
@@ -175,57 +216,23 @@ docker run -d --cap-add=NET_ADMIN --cap-add=NET_RAW ... ghcr.io/mhsanaei/3x-ui
 
 Tam liste [ortam değişkenleri referansında](https://docs.sanaei.dev/docs/reference/env-vars) yer alır.
 
-## Desteklenen Diller
+### Desteklenen Diller
 
 Panel arayüzü 13 farklı dilde mevcuttur:
 
 İngilizce · Farsça · Arapça · Çince (Basitleştirilmiş) · Çince (Geleneksel) · İspanyolca · Rusça · Ukraynaca · Türkçe · Vietnamca · Japonca · Endonezce · Portekizce (Brezilya)
 
-## Katkıda Bulunma
+### Katkıda Bulunma
 
 Katkılarınızı her zaman bekliyoruz. Bir sorun (issue) açmadan veya pull request (PR) göndermeden önce lütfen [Katkıda Bulunma Kılavuzunu](/CONTRIBUTING.md) okuyun.
 
-## Özel Teşekkürler
-
-- [alireza0](https://github.com/alireza0/)
-
-## Teşekkür & Atıf
-
-- [Iran v2ray rules](https://github.com/chocolate4u/Iran-v2ray-rules) (Lisans: **GPL-3.0**): _Geliştirilmiş v2ray/xray ve v2ray/xray-clients yönlendirme (routing) kuralları; yerleşik İran alan adları ile güvenlik ve reklam engelleme odaklıdır._
-- [Russia v2ray rules](https://github.com/runetfreedom/russia-v2ray-rules-dat) (Lisans: **GPL-3.0**): _Bu depo, Rusya'daki engellenen alan adları ve adreslere dayalı otomatik olarak güncellenen V2Ray yönlendirme kurallarını içerir._
-
-## Topluluk Araçları
+### Topluluk Araçları
 
 3x-ui çevresindeki topluluk tarafından oluşturulmuş araçlar ve entegrasyonlar.
 
 - [terraform-provider-3x-ui](https://github.com/batonogov/terraform-provider-threexui) (Lisans: **MIT**): _Gelen bağlantılarnı, kullanıcıları, panel ayarlarını ve Xray yapılandırmasını Terraform / OpenTofu ile kod olarak (as code) yönetin._
 - [3X-UI Manager](https://github.com/yukh975/3X-UI-Manager) (Lisans: **MIT**): _3x-ui için yerel Android istemcisi — kontrol paneli, gelen bağlantılar, QR ile paylaşımlı kullanıcılar, düğümler ve çoklu panel yönetimi. F-Droid'de mevcut._
 
-## Projeyi Destekleyin
+## Kaynak ve lisans
 
-**Eğer bu proje size faydalı olduysa, bir yıldız verebilirsiniz**:star2:
-
-<a href="https://www.buymeacoffee.com/MHSanaei" target="_blank">
-<img src="./media/default-yellow.png" alt="Bana Bir Kahve Ismarla" style="height: 70px !important;width: 277px !important;" >
-</a>
-
-</br>
-<a href="https://nowpayments.io/donation/hsanaei" target="_blank" rel="noreferrer noopener">
-   <img src="./media/donation-button-black.svg" alt="NOWPayments üzerinden Kripto Bağış Butonu">
-</a>
-
-## Yıldız Geçmişi
-
-<a href="https://www.star-history.com/?repos=mhsanaei%2F3x-ui&type=date&legend=top-left">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=mhsanaei/3x-ui&type=date&theme=dark&legend=top-left" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=mhsanaei/3x-ui&type=date&legend=top-left" />
-   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=mhsanaei/3x-ui&type=date&legend=top-left" />
- </picture>
-</a>
-
-<p align="center">
- <a href="https://www.star-history.com/mhsanaei/3x-ui">
-  <picture><source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/badge?repo=MHSanaei/3x-ui&type=rank&theme=dark" /><source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/badge?repo=MHSanaei/3x-ui&type=rank" /><img alt="Star History Rank" src="https://api.star-history.com/badge?repo=MHSanaei/3x-ui&type=rank" /></picture> <picture><source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/badge?repo=MHSanaei/3x-ui&type=trending&theme=dark" /><source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/badge?repo=MHSanaei/3x-ui&type=trending" /><img alt="GitHub Trending Repository of the Day" src="https://api.star-history.com/badge?repo=MHSanaei/3x-ui&type=trending" /></picture>
- </a>
-</p>
+Özgün proje: [MHSanaei/3x-ui](https://github.com/MHSanaei/3x-ui). Lisans: [GPL-3.0](LICENSE). Özgün yazarlık ve uyumluluk için Go modülünün adı korunur. Genel belgeler: [docs.sanaei.dev](https://docs.sanaei.dev).

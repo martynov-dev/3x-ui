@@ -1,30 +1,89 @@
-[English](/README.md) | [فارسی](/README.fa_IR.md) | [العربية](/README.ar_EG.md) | [中文](/README.zh_CN.md) | [Español](/README.es_ES.md) | [Русский](/README.ru_RU.md) | [Türkçe](/README.tr_TR.md)
+# 3X-UI — форк martynov-dev
 
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="./media/3x-ui-dark.png">
-    <img alt="3x-ui" src="./media/3x-ui-light.png">
-  </picture>
-</p>
+[English](README.md) | [فارسی](README.fa_IR.md) | [العربية](README.ar_EG.md) | [中文](README.zh_CN.md) | [Español](README.es_ES.md) | [Русский](README.ru_RU.md) | [Türkçe](README.tr_TR.md)
 
-<p align="center">
-  <a href="https://github.com/MHSanaei/3x-ui/releases"><img src="https://img.shields.io/github/v/release/mhsanaei/3x-ui" alt="Release"></a>
-  <a href="https://github.com/MHSanaei/3x-ui/actions"><img src="https://img.shields.io/github/actions/workflow/status/mhsanaei/3x-ui/release.yml.svg" alt="Build"></a>
-  <a href="#"><img src="https://img.shields.io/github/go-mod/go-version/mhsanaei/3x-ui.svg" alt="GO Version"></a>
-  <a href="https://github.com/MHSanaei/3x-ui/releases/latest"><img src="https://img.shields.io/github/downloads/mhsanaei/3x-ui/total.svg" alt="Downloads"></a>
-  <a href="https://www.gnu.org/licenses/gpl-3.0.en.html"><img src="https://img.shields.io/badge/license-GPL%20V3-blue.svg?longCache=true" alt="License"></a>
-  <a href="https://pkg.go.dev/github.com/mhsanaei/3x-ui/v3"><img src="https://pkg.go.dev/badge/github.com/mhsanaei/3x-ui/v3.svg" alt="Go Reference"></a>
-  <a href="https://docs.sanaei.dev"><img src="https://img.shields.io/badge/docs-docs.sanaei.dev-22d3ee" alt="Documentation"></a>
-</p>
+Форк [MHSanaei/3x-ui](https://github.com/MHSanaei/3x-ui) — панели управления Xray/VPN. Цель: убрать рекламу, добавить бэкапы панели вместе с nginx и сайтом-заглушкой VPN и настройку сайта через панель.
 
-**3X-UI** — продвинутая веб-панель управления с открытым исходным кодом для управления серверами [Xray-core](https://github.com/XTLS/Xray-core). Она предоставляет аккуратный многоязычный интерфейс для развёртывания, настройки и мониторинга широкого спектра протоколов прокси и VPN — от одного VPS до развёртываний с несколькими узлами.
-
-Созданный как улучшенный форк оригинального проекта X-UI, 3X-UI добавляет более широкую поддержку протоколов, повышенную стабильность, учёт трафика по каждому клиенту и множество функций для удобства использования.
+Основа — **3X-UI v3.10.2**, коммит [608ef4e4010bf83e2e78328e08f77efc051ad4d7](https://github.com/MHSanaei/3x-ui/commit/608ef4e4010bf83e2e78328e08f77efc051ad4d7). Это версия оригинала, от которой начата разработка форка.
 
 > [!IMPORTANT]
 > Этот проект предназначен только для личного использования. Пожалуйста, не используйте его в незаконных целях или в производственной среде.
 
-## Возможности
+## Отличия от оригинала
+
+- Удалены рекламные блоки спонсоров, раздел спонсоров и запросы для загрузки рекламы.
+- Добавлены ручные и автоматические полные бэкапы: выбор интервала, числа локальных копий, дополнительных путей и отправки на другое устройство по SSH.
+- Добавлены редактор конфига nginx и `index.html`, HTTP-шаблон, проверка `nginx -t` и откат файлов при ошибке применения.
+- Установка и обновления панели используют релизы **martynov-dev/3x-ui**. Изменения исходников оригинала подключаются отдельным слиянием.
+
+## Установка и обновление
+
+Перед установкой опубликуйте релиз с нужными бинарными файлами и контрольными суммами. Их можно собрать и опубликовать через GitHub Actions **Release 3X-UI** или подготовить и загрузить вручную. Сборка текущей ветки `main` использует тег `dev-latest`:
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/martynov-dev/3x-ui/main/setup.sh) dev-latest
+```
+
+Обновление существующей установки на сборку форка:
+
+```bash
+XUI_UPDATE_TAG=dev-latest bash <(curl -fsSL https://raw.githubusercontent.com/martynov-dev/3x-ui/main/update.sh)
+```
+
+Перед обновлением сохраните резервную копию. Стабильные теги должны быть опубликованы в этом форке; релизы оригинала автоматически не подставляются. Канал Dev в панели тоже проверяет этот форк.
+
+## Полные бэкапы
+
+[Инструкция: компьютер, роутер OpenWrt и другой сервер](docs/full-backups.ru.md)
+
+В разделе «Бэкапы и сайт» выберите интервал и число локальных копий, затем включите расписание. По умолчанию оно выключено, работает при запущенной панели и проверяется раз в минуту. Первый бэкап запускается после включения, просроченный запуск — после перезапуска панели.
+
+Архивы сохраняются в `/etc/x-ui/full-backups` или `$XUI_DB_FOLDER/full-backups` (права каталога `0700`, архива `0600`). В состав входят согласованный снимок SQLite (`database/x-ui.db`) или дамп PostgreSQL (`database/x-ui.dump`), файлы панели и настройки службы, выбранные пути nginx/сайта/сертификатов, цели симлинков и `manifest.json` с версией, датой, источниками и отсутствующими путями. Статические пути nginx дополнительно определяются через `nginx -T`.
+
+Это бэкап приложения, а не образ ОС. Логи, старые архивы и рабочие файлы SQLite WAL/SHM исключаются. Пути nginx с переменными и файлы других сервисов добавляйте вручную. Ошибка чтения существующего файла прерывает бэкап.
+
+Для SSH-отправки укажите адрес, порт, пользователя, существующий каталог и путь к приватному ключу **на сервере панели**. На сервере панели нужны `scp`, `ssh`, вход по ключу и проверенный ключ устройства в `known_hosts`. На устройстве назначения нужны совместимый с scp сервер и POSIX-команда `mv` (Linux/WSL, роутер или другой сервер); обычная SSH-оболочка Windows не поддерживается. Пустой адрес означает только локальные копии. Удаление старых удалённых копий настраивается на устройстве назначения. Незавершённая отправка имеет суффикс `.partial`; ошибка отображается в панели, локальная копия сохраняется.
+
+Архив содержит пароли и приватные ключи. SSH шифрует передачу; сам архив на диске не зашифрован.
+
+### Восстановление
+
+На Ubuntu/Debian с SQLite используйте единый скрипт установки и восстановления от root. Для восстановления нужен полный Linux-бэкап с той же архитектурой процессора и версией дистрибутива. Скрипт проверяет архив и снимок SQLite, устанавливает зависимости, возвращает бинарник панели из архива, базу, nginx, сайт и сертификаты и запускает службы. Адрес панели и учётные данные сохраняются из бэкапа. --check проверяет без применения; --replace явно разрешает замену существующей установки. При ошибке применения изменённые файлы откатываются; если откат не удался, исходные файлы остаются в /var/backups/x-ui-restore-*. PostgreSQL и Docker-бэкапы пока восстанавливаются вручную. Правила внешнего файрвола, DNS и внешние сервисы не восстанавливаются. Используйте только доверенные архивы. Перед использованием ссылки скрипт должен быть опубликован в этом форке.
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/martynov-dev/3x-ui/main/setup.sh -o setup.sh
+
+sudo bash setup.sh --backup /root/full-backup.tar.gz --check
+
+sudo bash setup.sh --backup /root/full-backup.tar.gz
+```
+
+## Сайт nginx
+
+nginx должен быть установлен и запущен. Выберите обнаруженный конфиг или путь внутри `/etc/nginx` и каталог сайта внутри `/var/www` либо `/usr/share/nginx/html`. Перед редактированием загрузите существующие файлы. Главный `nginx.conf` редактор не изменяет.
+
+HTTP-шаблон слушает порт 80: направьте DNS на сервер и откройте доступ. Для HTTPS нужны существующие сертификаты и соответствующие директивы. Для Xray fallback самостоятельно задайте согласованный локальный порт. Выдача сертификатов и настройка inbound Xray не автоматизированы.
+
+Проверяются текущая и новая конфигурации. При ошибке записи, проверки или reload возвращаются прежние файлы. Конфигу в `sites-available` нужно активное включение через `sites-enabled` или `include`. Избегайте конфликтов доменов/портов. Редактор меняет только `index.html`; остальные ресурсы остаются на диске и попадают в бэкап вместе с каталогом сайта.
+
+## Получение изменений оригинала
+
+Сохраните свои изменения коммитом и убедитесь, что рабочая папка чистая. Добавьте upstream один раз, затем получите и слейте изменения:
+
+```bash
+git remote add upstream https://github.com/MHSanaei/3x-ui.git
+git fetch upstream
+git switch main
+git merge upstream/main
+```
+
+Разрешите конфликты, выполните проверки проекта и отправьте ветку в свой форк. Слияние сохраняет историю коммитов, но совместимость с будущими изменениями оригинала требует проверки. Не сбрасывайте ветку форка на upstream. Обновление работающей панели из релиза форка — отдельный шаг.
+
+## Справка по базовой панели
+
+Ниже сохранена полезная справка из базовой версии. Отличия форка и команды его установки описаны выше. Образ контейнера нужно собрать локально или опубликовать из этого форка; образ оригинала не содержит доработок форка.
+
+### Возможности
 
 - **Многопротокольные входящие подключения** — VLESS, VMess, Trojan, Shadowsocks, WireGuard, AmneziaWG, TUIC v5, Hysteria2, MTProto, HTTP, SOCKS (Mixed), Dokodemo-door / Tunnel и TUN.
 - **Современные транспорты и безопасность** — TCP (Raw), mKCP, WebSocket, gRPC, HTTPUpgrade и XHTTP, защищённые с помощью TLS, XTLS и REALITY.
@@ -44,7 +103,7 @@
 - **13 языков интерфейса** с тёмной и светлой темами.
 - **Интеграция с Fail2ban** для применения лимитов IP по каждому клиенту.
 
-## Скриншоты
+### Скриншоты
 
 <details>
 <summary>Нажмите, чтобы развернуть</summary>
@@ -71,23 +130,7 @@
 
 </details>
 
-## Быстрый старт
-
-```bash
-bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh)
-```
-
-Чтобы установить конкретную версию, добавьте её тег (например, `v3.7.0`):
-
-```bash
-bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh) v3.7.0
-```
-
-Чтобы установить скользящую **dev**-сборку (новейший предварительный релиз по каждому коммиту из ветки `main`, а не стабильный релиз), передайте `dev-latest`:
-
-```bash
-bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh) dev-latest
-```
+### Быстрый старт
 
 Во время установки генерируются случайные имя пользователя, пароль и путь доступа. После установки выполните `x-ui`, чтобы открыть меню управления, где можно запускать/останавливать сервис, просматривать или сбрасывать учётные данные для входа, управлять SSL-сертификатами и многое другое.
 
@@ -95,7 +138,7 @@ bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.
 
 Полную документацию — установка, настройка, эксплуатация и полный справочник API — смотрите на **[docs.sanaei.dev](https://docs.sanaei.dev/ru)**.
 
-### Автоматическая установка
+#### Автоматическая установка
 
 Установщик также работает в **неинтерактивном** режиме для cloud-init.
 Задайте `XUI_NONINTERACTIVE=1` (или передайте по конвейеру без TTY), и установка пройдёт от начала до конца
@@ -105,13 +148,13 @@ bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.
 - [Cloud-init user-data](deploy/cloud-init/) — автоматическая установка в любом облаке (Hetzner/AWS/DO/Vultr/GCP/Azure/Oracle)
 - [Заметки по Hetzner Cloud](deploy/marketplace/hetzner/) — развёртывание на Hetzner на базе cloud-init
 
-## Поддерживаемые платформы
+### Поддерживаемые платформы
 
 **Операционные системы:** Ubuntu, Debian, Armbian, Fedora, CentOS, RHEL, AlmaLinux, Rocky Linux, Oracle Linux, Amazon Linux, Virtuozzo, Arch, Manjaro, Parch, openSUSE (Tumbleweed / Leap), Alpine и Windows.
 
 **Архитектуры:** `amd64` · `386` · `arm64` (aarch64) · `armv7` · `armv6` · `armv5` · `s390x`.
 
-## Варианты базы данных
+### Варианты базы данных
 
 3X-UI поддерживает два бэкенда, выбираемых при установке:
 
@@ -125,7 +168,7 @@ XUI_DB_TYPE=postgres
 XUI_DB_DSN=postgres://xui:password@127.0.0.1:5432/xui?sslmode=disable
 ```
 
-### Перенос существующей установки SQLite в PostgreSQL
+#### Перенос существующей установки SQLite в PostgreSQL
 
 ```bash
 x-ui migrate-db --dsn "postgres://xui:password@127.0.0.1:5432/xui?sslmode=disable"
@@ -135,7 +178,7 @@ systemctl restart x-ui
 
 Исходный файл SQLite остаётся нетронутым; удалите его вручную после проверки нового бэкенда.
 
-### Docker
+#### Docker
 
 Команда по умолчанию `docker compose up -d` продолжает использовать SQLite. Чтобы запустить со встроенным сервисом PostgreSQL, раскомментируйте две строки переменных окружения `XUI_DB_*` в `docker-compose.yml` и запустите с профилем:
 
@@ -146,10 +189,10 @@ docker compose --profile postgres up -d
 Образ включает Fail2ban (включён по умолчанию) для применения **лимитов IP** по каждому клиенту. Fail2ban блокирует нарушителей с помощью `iptables`, что требует возможности `NET_ADMIN`. `docker-compose.yml` уже предоставляет её через `cap_add`; если вы вместо этого запускаете контейнер через `docker run`, добавьте возможности самостоятельно, иначе блокировки будут регистрироваться, но никогда не применяться:
 
 ```bash
-docker run -d --cap-add=NET_ADMIN --cap-add=NET_RAW ... ghcr.io/mhsanaei/3x-ui
+docker run -d --cap-add=NET_ADMIN --cap-add=NET_RAW ... ghcr.io/martynov-dev/3x-ui
 ```
 
-## Переменные окружения
+### Переменные окружения
 
 | Переменная | Описание | По умолчанию |
 | --- | --- | --- |
@@ -175,57 +218,23 @@ docker run -d --cap-add=NET_ADMIN --cap-add=NET_RAW ... ghcr.io/mhsanaei/3x-ui
 
 Полный список — в [справочнике переменных окружения](https://docs.sanaei.dev/ru/docs/reference/env-vars).
 
-## Поддерживаемые языки
+### Поддерживаемые языки
 
 Интерфейс панели доступен на 13 языках:
 
 English · فارسی · العربية · 中文（简体） · 中文（繁體） · Español · Русский · Українська · Türkçe · Tiếng Việt · 日本語 · Bahasa Indonesia · Português (Brasil)
 
-## Участие в разработке
+### Участие в разработке
 
 Вклад приветствуется. Пожалуйста, прочитайте [руководство по участию](/CONTRIBUTING.md), прежде чем открывать issue или pull request.
 
-## Особая благодарность
-
-- [alireza0](https://github.com/alireza0/)
-
-## Благодарности
-
-- [Iran v2ray rules](https://github.com/chocolate4u/Iran-v2ray-rules) (Лицензия: **GPL-3.0**): _Улучшенные правила маршрутизации для v2ray/xray и v2ray/xray-clients со встроенными иранскими доменами и фокусом на безопасность и блокировку рекламы._
-- [Russia v2ray rules](https://github.com/runetfreedom/russia-v2ray-rules-dat) (Лицензия: **GPL-3.0**): _Этот репозиторий содержит автоматически обновляемые правила маршрутизации V2Ray на основе данных о заблокированных доменах и адресах в России._
-
-## Инструменты сообщества
+### Инструменты сообщества
 
 Инструменты и интеграции, созданные сообществом вокруг 3x-ui.
 
 - [terraform-provider-3x-ui](https://github.com/batonogov/terraform-provider-threexui) (Лицензия: **MIT**): _Управление входящими, клиентами, настройками панели и конфигурацией Xray через код с помощью Terraform / OpenTofu._
 - [3X-UI Manager](https://github.com/yukh975/3X-UI-Manager) (Лицензия: **MIT**): _Нативный Android-клиент для 3x-ui — дашборд, входящие, клиенты с QR, узлы и управление несколькими панелями. Доступен в F-Droid._
 
-## Поддержка проекта
+## Исходный проект и лицензия
 
-**Если этот проект полезен для вас, вы можете поставить ему**:star2:
-
-<a href="https://www.buymeacoffee.com/MHSanaei" target="_blank">
-<img src="./media/default-yellow.png" alt="Buy Me A Coffee" style="height: 70px !important;width: 277px !important;" >
-</a>
-
-</br>
-<a href="https://nowpayments.io/donation/hsanaei" target="_blank" rel="noreferrer noopener">
-   <img src="./media/donation-button-black.svg" alt="Crypto donation button by NOWPayments">
-</a>
-
-## История звёзд
-
-<a href="https://www.star-history.com/?repos=mhsanaei%2F3x-ui&type=date&legend=top-left">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=mhsanaei/3x-ui&type=date&theme=dark&legend=top-left" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=mhsanaei/3x-ui&type=date&legend=top-left" />
-   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=mhsanaei/3x-ui&type=date&legend=top-left" />
- </picture>
-</a>
-
-<p align="center">
- <a href="https://www.star-history.com/mhsanaei/3x-ui">
-  <picture><source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/badge?repo=MHSanaei/3x-ui&type=rank&theme=dark" /><source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/badge?repo=MHSanaei/3x-ui&type=rank" /><img alt="Star History Rank" src="https://api.star-history.com/badge?repo=MHSanaei/3x-ui&type=rank" /></picture> <picture><source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/badge?repo=MHSanaei/3x-ui&type=trending&theme=dark" /><source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/badge?repo=MHSanaei/3x-ui&type=trending" /><img alt="GitHub Trending Repository of the Day" src="https://api.star-history.com/badge?repo=MHSanaei/3x-ui&type=trending" /></picture>
- </a>
-</p>
+Исходный проект — [MHSanaei/3x-ui](https://github.com/MHSanaei/3x-ui). Лицензия — [GPL-3.0](LICENSE). Авторство сохраняется. Имя Go-модуля оставлено исходным для совместимости. Общая документация оригинала: [docs.sanaei.dev](https://docs.sanaei.dev/ru).

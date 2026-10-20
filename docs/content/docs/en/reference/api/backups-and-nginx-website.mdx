@@ -1,0 +1,84 @@
+---
+title: Backups and nginx website
+description: Fork maintenance API. Requires an admin session or admin token;
+  browser mutations require CSRF. Full archives contain secrets.
+full: true
+_openapi:
+  preload:
+    - ./public/openapi.json
+  toc:
+    - depth: 2
+      title: Get settings, last run status and local archives. Automatic backups are
+        disabled until configured.
+      url: '#get-settings-last-run-status-and-local-archives-automatic-backups-are-disabled-until-configured'
+    - depth: 2
+      title: Save interval (hours), local retention, extra source paths and optional
+        SSH destination. Empty remoteHost means local storage only. SSH requires
+        verified known_hosts, key authentication and a POSIX remote shell.
+        Remote retention is external.
+      url: '#save-interval-hours-local-retention-extra-source-paths-and-optional-ssh-destination-empty-remotehost-means-local-storage-only-ssh-requires-verified-known_hosts-key-authentication-and-a-posix-remote-shell-remote-retention-is-external'
+    - depth: 2
+      title: Create an archive and optionally upload it. Synchronous; allow up to 30
+        minutes. Failed uploads retain the local archive and record an error.
+      url: '#create-an-archive-and-optionally-upload-it-synchronous-allow-up-to-30-minutes-failed-uploads-retain-the-local-archive-and-record-an-error'
+    - depth: 2
+      title: Download an existing full archive. Restore manually; database import does
+        not accept full archives.
+      url: '#download-an-existing-full-archive-restore-manually-database-import-does-not-accept-full-archives'
+    - depth: 2
+      title: Read site configuration and index.html. Defaults to saved paths. Config
+        is restricted to /etc/nginx except nginx.conf; root to /var/www or
+        /usr/share/nginx/html.
+      url: '#read-site-configuration-and-indexhtml-defaults-to-saved-paths-config-is-restricted-to-etcnginx-except-nginxconf-root-to-varwww-or-usrsharenginxhtml'
+    - depth: 2
+      title: Write configuration and index.html, test with nginx -t and reload.
+        Restore old files on write/test/reload command failure. Requires
+        installed, running nginx. Does not issue certificates or change Xray
+        fallbacks.
+      url: '#write-configuration-and-indexhtml-test-with-nginx--t-and-reload-restore-old-files-on-writetestreload-command-failure-requires-installed-running-nginx-does-not-issue-certificates-or-change-xray-fallbacks'
+    - depth: 2
+      title: Discover enabled site files and document roots using nginx -T without
+        modifying them.
+      url: '#discover-enabled-site-files-and-document-roots-using-nginx--t-without-modifying-them'
+  structuredData:
+    headings:
+      - content: Get settings, last run status and local archives. Automatic backups are
+          disabled until configured.
+        id: get-settings-last-run-status-and-local-archives-automatic-backups-are-disabled-until-configured
+      - content: Save interval (hours), local retention, extra source paths and optional
+          SSH destination. Empty remoteHost means local storage only. SSH
+          requires verified known_hosts, key authentication and a POSIX remote
+          shell. Remote retention is external.
+        id: save-interval-hours-local-retention-extra-source-paths-and-optional-ssh-destination-empty-remotehost-means-local-storage-only-ssh-requires-verified-known_hosts-key-authentication-and-a-posix-remote-shell-remote-retention-is-external
+      - content: Create an archive and optionally upload it. Synchronous; allow up to 30
+          minutes. Failed uploads retain the local archive and record an error.
+        id: create-an-archive-and-optionally-upload-it-synchronous-allow-up-to-30-minutes-failed-uploads-retain-the-local-archive-and-record-an-error
+      - content: Download an existing full archive. Restore manually; database import
+          does not accept full archives.
+        id: download-an-existing-full-archive-restore-manually-database-import-does-not-accept-full-archives
+      - content: Read site configuration and index.html. Defaults to saved paths. Config
+          is restricted to /etc/nginx except nginx.conf; root to /var/www or
+          /usr/share/nginx/html.
+        id: read-site-configuration-and-indexhtml-defaults-to-saved-paths-config-is-restricted-to-etcnginx-except-nginxconf-root-to-varwww-or-usrsharenginxhtml
+      - content: Write configuration and index.html, test with nginx -t and reload.
+          Restore old files on write/test/reload command failure. Requires
+          installed, running nginx. Does not issue certificates or change Xray
+          fallbacks.
+        id: write-configuration-and-indexhtml-test-with-nginx--t-and-reload-restore-old-files-on-writetestreload-command-failure-requires-installed-running-nginx-does-not-issue-certificates-or-change-xray-fallbacks
+      - content: Discover enabled site files and document roots using nginx -T without
+          modifying them.
+        id: discover-enabled-site-files-and-document-roots-using-nginx--t-without-modifying-them
+    contents: []
+---
+
+{/* This file was generated by Fumadocs. Do not edit this file directly. Any changes should be made by running the generation command again. */}
+
+export default function Layout(props) {
+  const { OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <OpenAPIPage document="./public/openapi.json" webhooks={[]} operations={[{"path":"/panel/api/maintenance/backups","method":"get"},{"path":"/panel/api/maintenance/backups/settings","method":"post"},{"path":"/panel/api/maintenance/backups/run","method":"post"},{"path":"/panel/api/maintenance/backups/download/{name}","method":"get"},{"path":"/panel/api/maintenance/nginx","method":"get"},{"path":"/panel/api/maintenance/nginx","method":"post"},{"path":"/panel/api/maintenance/nginx/sites","method":"get"}]} showTitle />
+    </>
+  );
+}

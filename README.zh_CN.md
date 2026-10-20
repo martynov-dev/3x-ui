@@ -1,30 +1,87 @@
-[English](/README.md) | [فارسی](/README.fa_IR.md) | [العربية](/README.ar_EG.md) | [中文](/README.zh_CN.md) | [Español](/README.es_ES.md) | [Русский](/README.ru_RU.md) | [Türkçe](/README.tr_TR.md)
+# 3X-UI — martynov-dev 分支
 
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="./media/3x-ui-dark.png">
-    <img alt="3x-ui" src="./media/3x-ui-light.png">
-  </picture>
-</p>
+[English](README.md) | [فارسی](README.fa_IR.md) | [العربية](README.ar_EG.md) | [中文](README.zh_CN.md) | [Español](README.es_ES.md) | [Русский](README.ru_RU.md) | [Türkçe](README.tr_TR.md)
 
-<p align="center">
-  <a href="https://github.com/MHSanaei/3x-ui/releases"><img src="https://img.shields.io/github/v/release/mhsanaei/3x-ui" alt="Release"></a>
-  <a href="https://github.com/MHSanaei/3x-ui/actions"><img src="https://img.shields.io/github/actions/workflow/status/mhsanaei/3x-ui/release.yml.svg" alt="Build"></a>
-  <a href="#"><img src="https://img.shields.io/github/go-mod/go-version/mhsanaei/3x-ui.svg" alt="GO Version"></a>
-  <a href="https://github.com/MHSanaei/3x-ui/releases/latest"><img src="https://img.shields.io/github/downloads/mhsanaei/3x-ui/total.svg" alt="Downloads"></a>
-  <a href="https://www.gnu.org/licenses/gpl-3.0.en.html"><img src="https://img.shields.io/badge/license-GPL%20V3-blue.svg?longCache=true" alt="License"></a>
-  <a href="https://pkg.go.dev/github.com/mhsanaei/3x-ui/v3"><img src="https://pkg.go.dev/badge/github.com/mhsanaei/3x-ui/v3.svg" alt="Go Reference"></a>
-  <a href="https://docs.sanaei.dev"><img src="https://img.shields.io/badge/docs-docs.sanaei.dev-22d3ee" alt="Documentation"></a>
-</p>
+本项目是 Xray/VPN 管理面板 [MHSanaei/3x-ui](https://github.com/MHSanaei/3x-ui) 的分支。目标是移除广告，备份面板、nginx 和 VPN 伪装网站，并通过面板配置网站。
 
-**3X-UI** 是一个先进的开源 Web 控制面板，用于管理 [Xray-core](https://github.com/XTLS/Xray-core) 服务器。它提供简洁、多语言的界面，用于部署、配置和监控各种代理与 VPN 协议——从单台 VPS 到多节点部署。
-
-3X-UI 作为原始 X-UI 项目的增强分支（fork），增加了更广泛的协议支持、更好的稳定性、按客户端的流量统计以及许多提升使用体验的功能。
+基于 **3X-UI v3.10.2**，起始提交为 [608ef4e4010bf83e2e78328e08f77efc051ad4d7](https://github.com/MHSanaei/3x-ui/commit/608ef4e4010bf83e2e78328e08f77efc051ad4d7)。这是本分支开始开发时采用的上游版本。
 
 > [!IMPORTANT]
 > 本项目仅供个人使用。请勿将其用于非法目的，也请勿在生产环境中使用。
 
-## 功能特性
+## 与原项目的区别
+
+- 移除了赞助商广告、赞助商页面和加载广告的请求。
+- 新增手动和定时完整备份，可配置间隔、本地保留数量、额外路径以及通过 SSH 发送到其他设备。
+- 新增 nginx 配置和 `index.html` 编辑、HTTP 模板、`nginx -t` 验证，以及应用失败时的文件回滚。
+- 安装和面板更新使用 **martynov-dev/3x-ui** 的发布版本。上游源码更新需要单独合并。
+
+## 安装和更新
+
+安装前，请发布包含所需二进制文件和校验和的版本。可使用 GitHub Actions **Release 3X-UI** 构建和发布，也可手动准备并上传。`main` 分支的滚动构建使用 `dev-latest`：
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/martynov-dev/3x-ui/main/setup.sh) dev-latest
+```
+
+将现有安装更新到本分支：
+
+```bash
+XUI_UPDATE_TAG=dev-latest bash <(curl -fsSL https://raw.githubusercontent.com/martynov-dev/3x-ui/main/update.sh)
+```
+
+更新前请先备份。稳定版本标签必须已在本分支发布，不会自动替换为上游发布版本。面板的 Dev 通道也检查本分支。
+
+## 完整备份
+
+在备份与网站页面选择间隔和本地保留数量，然后启用定时备份。默认关闭，仅在面板运行时执行，每分钟检查一次。启用后执行首次备份，重启后执行已到期的任务。
+
+存储位置为 `/etc/x-ui/full-backups` 或 `$XUI_DB_FOLDER/full-backups`（目录权限 `0700`，归档权限 `0600`）。内容包括一致的 SQLite 快照（`database/x-ui.db`）或 PostgreSQL 转储（`database/x-ui.dump`）、面板文件与服务设置、配置的 nginx/网站/证书路径、符号链接目标，以及记录版本、日期、来源和缺失路径的 `manifest.json`。还会通过 `nginx -T` 发现静态 nginx 路径。
+
+这是应用备份，不是操作系统镜像。不包含日志、旧归档和活动 SQLite WAL/SHM 文件。使用 nginx 变量的路径和其他服务文件需要手动添加。读取现有文件失败会中止备份。
+
+远程发送需要配置 SSH 地址、端口、用户、已存在的目标目录，以及**面板服务器上**的私钥路径。面板服务器需要 `scp`、`ssh`、密钥认证及 `known_hosts` 中已验证的目标主机密钥。目标需要兼容 scp 的服务器和 POSIX `mv` 命令（Linux/WSL、路由器或其他服务器）；不支持原生 Windows SSH shell。地址为空时仅本地保存。远程保留策略需要在目标设备上配置。未完成的上传以 `.partial` 结尾；上传失败会显示错误并保留本地归档。
+
+归档包含密码和私钥。SSH 加密传输过程，但磁盘上的归档本身未加密。
+
+### 恢复
+
+Ubuntu/Debian 与 SQLite 可使用同一个脚本安装或恢复，请以 root 运行。完整 Linux 备份必须来自相同 CPU 架构和发行版版本。脚本验证归档和 SQLite 快照，安装依赖，恢复归档中的面板程序、数据库、nginx、网站与证书，并启动服务。面板地址和登录凭据保持为备份中的值。--check 仅检查不应用；--replace 明确允许替换现有安装。应用失败时回滚文件；回滚失败时原文件保留在 /var/backups/x-ui-restore-*。PostgreSQL 和 Docker 备份目前需要手动恢复。外部防火墙、DNS 和外部服务不会恢复。只恢复可信归档。使用下载地址前，脚本必须已在本分支发布。
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/martynov-dev/3x-ui/main/setup.sh -o setup.sh
+
+sudo bash setup.sh --backup /root/full-backup.tar.gz --check
+
+sudo bash setup.sh --backup /root/full-backup.tar.gz
+```
+
+## nginx 网站
+
+nginx 必须已安装并运行。选择检测到的配置，或指定 `/etc/nginx` 内的路径和 `/var/www` 或 `/usr/share/nginx/html` 内的网站目录。编辑前先加载现有文件。编辑器不会修改主 `nginx.conf`。
+
+HTTP 模板监听 80 端口；请将 DNS 指向服务器并允许访问。HTTPS 需要现有证书和相应指令。Xray fallback 需要手动配置匹配的本地端口。不会自动签发证书或配置 Xray 入站。
+
+会验证当前配置和新配置。写入、验证或 reload 失败时恢复原文件。`sites-available` 中的配置必须通过有效的 `sites-enabled` 链接或 `include` 启用。避免域名和端口冲突。编辑器只修改 `index.html`；其他资源保留在磁盘上，并随网站目录一起备份。
+
+## 合并上游更新
+
+先提交本地修改并确保工作区干净。upstream 远程仓库只需添加一次，然后获取并合并更新：
+
+```bash
+git remote add upstream https://github.com/MHSanaei/3x-ui.git
+git fetch upstream
+git switch main
+git merge upstream/main
+```
+
+解决冲突，运行项目检查，然后推送到自己的分支。合并会保留提交历史，但与未来上游变更的兼容性仍需测试。不要将本分支重置到 upstream。通过本分支发布版本更新正在运行的面板是另一个独立步骤。
+
+## 基础面板参考
+
+以下保留基础版本中的实用参考内容。本分支的改动和安装命令见上文。容器镜像需要在本地构建或从本分支发布；上游镜像不包含本分支的改动。
+
+### 功能特性
 
 - **多协议入站** — VLESS、VMess、Trojan、Shadowsocks、WireGuard、AmneziaWG、TUIC v5、Hysteria2、MTProto、HTTP、SOCKS (Mixed)、Dokodemo-door / Tunnel 和 TUN。
 - **现代传输与安全** — TCP (Raw)、mKCP、WebSocket、gRPC、HTTPUpgrade 和 XHTTP，并通过 TLS、XTLS 和 REALITY 加密。
@@ -44,7 +101,7 @@
 - **13 种界面语言**，支持深色和浅色主题。
 - **Fail2ban 集成**，用于强制执行按客户端的 IP 限制。
 
-## 截图
+### 截图
 
 <details>
 <summary>点击展开</summary>
@@ -71,23 +128,7 @@
 
 </details>
 
-## 快速开始
-
-```bash
-bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh)
-```
-
-若要安装特定版本，请在命令后附加对应的标签（例如 `v3.7.0`）：
-
-```bash
-bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh) v3.7.0
-```
-
-若要安装滚动更新的 **dev** 版本（来自 `main` 的最新逐次提交预发布版本，而非稳定版本），请传入 `dev-latest`：
-
-```bash
-bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh) dev-latest
-```
+### 快速开始
 
 安装过程中会生成随机的用户名、密码和访问路径。安装完成后，运行 `x-ui` 打开管理菜单，您可以在其中启动/停止服务、查看或重置登录凭据、管理 SSL 证书等。
 
@@ -95,7 +136,7 @@ bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.
 
 完整文档（安装、配置、运维以及完整的 API 参考）请访问 **[docs.sanaei.dev](https://docs.sanaei.dev/zh)**。
 
-### 无人值守安装
+#### 无人值守安装
 
 安装程序也可以**非交互式**运行，适用于 cloud-init。
 设置 `XUI_NONINTERACTIVE=1`（或在无 TTY 的情况下通过管道传入），它就会全程
@@ -105,13 +146,13 @@ bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.
 - [Cloud-init user-data](deploy/cloud-init/) — 在任意云平台上无人值守安装（Hetzner/AWS/DO/Vultr/GCP/Azure/Oracle）
 - [Hetzner Cloud 说明](deploy/marketplace/hetzner/) — 在 Hetzner 上基于 cloud-init 的部署
 
-## 支持的平台
+### 支持的平台
 
 **操作系统：** Ubuntu、Debian、Armbian、Fedora、CentOS、RHEL、AlmaLinux、Rocky Linux、Oracle Linux、Amazon Linux、Virtuozzo、Arch、Manjaro、Parch、openSUSE (Tumbleweed / Leap)、Alpine 和 Windows。
 
 **架构：** `amd64` · `386` · `arm64` (aarch64) · `armv7` · `armv6` · `armv5` · `s390x`。
 
-## 数据库选项
+### 数据库选项
 
 3X-UI 支持两种后端，可在安装时选择：
 
@@ -125,7 +166,7 @@ XUI_DB_TYPE=postgres
 XUI_DB_DSN=postgres://xui:password@127.0.0.1:5432/xui?sslmode=disable
 ```
 
-### 将现有的 SQLite 安装迁移到 PostgreSQL
+#### 将现有的 SQLite 安装迁移到 PostgreSQL
 
 ```bash
 x-ui migrate-db --dsn "postgres://xui:password@127.0.0.1:5432/xui?sslmode=disable"
@@ -135,7 +176,7 @@ systemctl restart x-ui
 
 源 SQLite 文件保持不变；在确认新后端正常工作后，请手动删除它。
 
-### Docker
+#### Docker
 
 默认的 `docker compose up -d` 仍使用 SQLite。若要使用捆绑的 PostgreSQL 服务运行，请取消注释 `docker-compose.yml` 中的两行 `XUI_DB_*` 环境变量，并使用该 profile 启动：
 
@@ -146,10 +187,10 @@ docker compose --profile postgres up -d
 该镜像捆绑了 Fail2ban（默认启用），用于强制执行按客户端的 **IP 限制**。Fail2ban 使用 `iptables` 封禁违规者，这需要 `NET_ADMIN` 权限。`docker-compose.yml` 已通过 `cap_add` 授予该权限；如果您改用 `docker run` 启动容器，请自行添加这些权限，否则封禁只会被记录而永远不会生效：
 
 ```bash
-docker run -d --cap-add=NET_ADMIN --cap-add=NET_RAW ... ghcr.io/mhsanaei/3x-ui
+docker run -d --cap-add=NET_ADMIN --cap-add=NET_RAW ... ghcr.io/martynov-dev/3x-ui
 ```
 
-## 环境变量
+### 环境变量
 
 | 变量 | 说明 | 默认值 |
 | --- | --- | --- |
@@ -175,57 +216,23 @@ docker run -d --cap-add=NET_ADMIN --cap-add=NET_RAW ... ghcr.io/mhsanaei/3x-ui
 
 完整列表请参阅[环境变量参考](https://docs.sanaei.dev/zh/docs/reference/env-vars)。
 
-## 支持的语言
+### 支持的语言
 
 面板界面提供 13 种语言：
 
 English · فارسی · العربية · 中文（简体） · 中文（繁體） · Español · Русский · Українська · Türkçe · Tiếng Việt · 日本語 · Bahasa Indonesia · Português (Brasil)
 
-## 贡献
+### 贡献
 
 欢迎贡献。在提交 issue 或 pull request 之前，请阅读[贡献指南](/CONTRIBUTING.md)。
 
-## 特别感谢
-
-- [alireza0](https://github.com/alireza0/)
-
-## 致谢
-
-- [Iran v2ray rules](https://github.com/chocolate4u/Iran-v2ray-rules) (许可证: **GPL-3.0**): _增强的 v2ray/xray 和 v2ray/xray-clients 路由规则，内置伊朗域名，专注于安全性和广告拦截。_
-- [Russia v2ray rules](https://github.com/runetfreedom/russia-v2ray-rules-dat) (许可证: **GPL-3.0**): _此仓库包含基于俄罗斯被阻止域名和地址数据自动更新的 V2Ray 路由规则。_
-
-## 社区工具
+### 社区工具
 
 社区围绕 3x-ui 构建的工具和集成。
 
 - [terraform-provider-3x-ui](https://github.com/batonogov/terraform-provider-threexui) (许可证: **MIT**): _使用 Terraform / OpenTofu 通过代码管理入站、客户端、面板设置和 Xray 配置。_
 - [3X-UI Manager](https://github.com/yukh975/3X-UI-Manager) (许可证: **MIT**): _3x-ui 的原生 Android 客户端 — 仪表板、入站、带二维码分享的客户端、节点以及多面板管理。可在 F-Droid 获取。_
 
-## 支持项目
+## 来源与许可证
 
-**如果这个项目对您有帮助，您可以给它一个**:star2:
-
-<a href="https://www.buymeacoffee.com/MHSanaei" target="_blank">
-<img src="./media/default-yellow.png" alt="Buy Me A Coffee" style="height: 70px !important;width: 277px !important;" >
-</a>
-
-</br>
-<a href="https://nowpayments.io/donation/hsanaei" target="_blank" rel="noreferrer noopener">
-   <img src="./media/donation-button-black.svg" alt="Crypto donation button by NOWPayments">
-</a>
-
-## 星标历史
-
-<a href="https://www.star-history.com/?repos=mhsanaei%2F3x-ui&type=date&legend=top-left">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=mhsanaei/3x-ui&type=date&theme=dark&legend=top-left" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=mhsanaei/3x-ui&type=date&legend=top-left" />
-   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=mhsanaei/3x-ui&type=date&legend=top-left" />
- </picture>
-</a>
-
-<p align="center">
- <a href="https://www.star-history.com/mhsanaei/3x-ui">
-  <picture><source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/badge?repo=MHSanaei/3x-ui&type=rank&theme=dark" /><source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/badge?repo=MHSanaei/3x-ui&type=rank" /><img alt="Star History Rank" src="https://api.star-history.com/badge?repo=MHSanaei/3x-ui&type=rank" /></picture> <picture><source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/badge?repo=MHSanaei/3x-ui&type=trending&theme=dark" /><source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/badge?repo=MHSanaei/3x-ui&type=trending" /><img alt="GitHub Trending Repository of the Day" src="https://api.star-history.com/badge?repo=MHSanaei/3x-ui&type=trending" /></picture>
- </a>
-</p>
+原项目：[MHSanaei/3x-ui](https://github.com/MHSanaei/3x-ui)。许可证：[GPL-3.0](LICENSE)。保留原作者信息。为保持代码兼容，Go 模块名称保持不变。上游通用文档：[docs.sanaei.dev](https://docs.sanaei.dev)。

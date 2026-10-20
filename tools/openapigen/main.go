@@ -110,11 +110,15 @@ func run(root, outDir string) error {
 				"AmneziaWGLogs",
 				"PeerActivity",
 				"HwidSlotStatus",
+				"FullBackupSettings",
+				"FullBackupStatus",
+				"FullBackupFile",
+				"NginxSite",
 			),
 		},
 		{
 			Path:        resolveRel(root, "internal/web/service/panel"),
-			StructAllow: setOf("ApiTokenView", "PanelUpdateStatus", "Sponsor", "SponsorList"),
+			StructAllow: setOf("ApiTokenView", "PanelUpdateStatus"),
 		},
 		{
 			Path:        resolveRel(root, "internal/amneziawg"),
