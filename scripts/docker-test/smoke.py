@@ -80,14 +80,17 @@ def main():
     client.request(API + "/backups/settings", settings)
     print("PASS: authenticated settings API", flush=True)
 
-    site = {"configPath": "/etc/nginx/conf.d/backup-test.conf", "root": "/var/www/backup-test",
-            "config": "server { listen 80; server_name backup-test.local; root /var/www/backup-test; index index.html; }\n",
+    site_root = f"/var/www/backup-test-{time.time_ns()}/nested"
+    site = {"configPath": "/etc/nginx/conf.d/backup-test.conf", "root": site_root,
+            "config": f"server {{ listen 80; server_name backup-test.local; root {site_root}; index index.html; }}\n",
             "html": "<h1>Restorable test website</h1>\n"}
     client.request(API + "/nginx", site)
     check_website("Restorable test website")
+    for directory in (site_root, site_root.rsplit("/", 1)[0]):
+        assert docker("exec", "-T", "panel", "stat", "-c", "%a", directory) == "755"
     client.request(API + "/nginx", {**site, "config": "this is invalid nginx;", "html": "BROKEN"}, success=False)
     check_website("Restorable test website")
-    print("PASS: nginx apply, live HTTP and rollback on invalid configuration", flush=True)
+    print("PASS: nginx apply, new directories under service umask, live HTTP and rollback", flush=True)
 
     client.request(API + "/backups/run", {})
     name = client.backups()["status"]["file"]
@@ -95,10 +98,10 @@ def main():
     with tarfile.open(fileobj=io.BytesIO(archive_bytes), mode="r:gz") as archive:
         names = set(archive.getnames())
         for required in ["database/x-ui.db", "files/app/x-ui", "files/etc/nginx/nginx.conf",
-                         "files/etc/nginx/conf.d/backup-test.conf", "files/var/www/backup-test/index.html", "manifest.json"]:
+                         "files/etc/nginx/conf.d/backup-test.conf", "files" + site_root + "/index.html", "manifest.json"]:
             assert required in names, required
         assert not any("full-backups/" in n or n.endswith(("x-ui.db-wal", "x-ui.db-shm")) for n in names)
-        assert archive.extractfile("files/var/www/backup-test/index.html").read().decode() == site["html"]
+        assert archive.extractfile("files" + site_root + "/index.html").read().decode() == site["html"]
         manifest = json.load(archive.extractfile("manifest.json"))
         assert manifest["os"] == "linux" and manifest["dbType"] == "sqlite"
         with tempfile.TemporaryDirectory() as temp:

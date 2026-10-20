@@ -212,8 +212,32 @@ func rememberSiteFile(path string) (siteOriginal, error) {
 	return v, err
 }
 
+func makeSiteDirectory(path string) error {
+	info, err := os.Stat(path)
+	if err == nil {
+		if !info.IsDir() {
+			return fmt.Errorf("not a directory: %s", path)
+		}
+		return nil
+	}
+	if !os.IsNotExist(err) {
+		return err
+	}
+	if err = makeSiteDirectory(filepath.Dir(path)); err != nil {
+		return err
+	}
+	if err = os.Mkdir(path, 0o755); err != nil {
+		if os.IsExist(err) {
+			return nil
+		}
+		return err
+	}
+	// systemd's UMask=0077 must not hide new website directories from nginx.
+	return os.Chmod(path, 0o755)
+}
+
 func writeSiteFile(path string, data []byte, mode os.FileMode) error {
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+	if err := makeSiteDirectory(filepath.Dir(path)); err != nil {
 		return err
 	}
 	f, err := os.CreateTemp(filepath.Dir(path), ".3x-ui-site-*")
