@@ -34,6 +34,8 @@ Back up before updating. Stable tags must exist in this fork; upstream releases 
 
 ## Full backups
 
+[Backup guide: computer, OpenWrt router and another server](docs/full-backups.md)
+
 In the backups and website section, choose the interval and local retention, then enable scheduling. It is disabled by default, runs while the panel is running and is checked every minute. The first backup runs after enabling it; overdue work resumes after a restart.
 
 Archives are stored in `/etc/x-ui/full-backups` or `$XUI_DB_FOLDER/full-backups` (directory `0700`, archives `0600`). They contain a consistent SQLite snapshot (`database/x-ui.db`) or PostgreSQL dump (`database/x-ui.dump`), panel files and service settings, configured nginx/site/certificate paths, symlink targets and `manifest.json` with the version, date, sources and missing paths. Static nginx paths are also discovered through `nginx -T`.
