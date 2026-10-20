@@ -46,12 +46,43 @@ function showPage() {
 afterEach(() => vi.restoreAllMocks());
 
 describe('maintenance', () => {
+  it('saves complete local settings while advanced fields are collapsed', async () => {
+    vi.spyOn(HttpUtil, 'get').mockResolvedValue(new Msg(true, '', backupData));
+    const post = vi.spyOn(HttpUtil, 'post').mockResolvedValue(new Msg(true));
+    showPage();
+    await screen.findByLabelText('Interval (hours)');
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    await waitFor(() =>
+      expect(post).toHaveBeenCalledWith(
+        '/panel/api/maintenance/backups/settings',
+        settings,
+        expect.anything(),
+      ),
+    );
+    expect(await screen.findByText('Settings saved')).toBeTruthy();
+  });
+
+  it('requires the remaining destination fields when an SSH host is entered', async () => {
+    vi.spyOn(HttpUtil, 'get').mockResolvedValue(new Msg(true, '', backupData));
+    const post = vi.spyOn(HttpUtil, 'post').mockResolvedValue(new Msg(true));
+    showPage();
+    await screen.findByLabelText('Interval (hours)');
+    fireEvent.click(screen.getByRole('button', { name: 'Remote copy over SSH (optional)' }));
+    fireEvent.change(screen.getByLabelText('SSH host (hostname or IPv4)'), {
+      target: { value: 'backup.example.com' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(screen.getAllByText('Please fill in this field')).toHaveLength(3));
+    expect(post).not.toHaveBeenCalled();
+  });
+
   it('saves the chosen backup schedule as JSON and reports failed backups', async () => {
     vi.spyOn(HttpUtil, 'get').mockResolvedValue(new Msg(true, '', backupData));
     const post = vi.spyOn(HttpUtil, 'post').mockResolvedValue(new Msg(true));
     showPage();
     const interval = await screen.findByLabelText('Interval (hours)');
     fireEvent.change(interval, { target: { value: '12' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Additional paths (one per line)' }));
     const paths = screen.getByLabelText('Additional paths (one per line)');
     fireEvent.change(paths, { target: { value: '/etc/nginx\n/var/www\n' } });
     expect(paths).toHaveProperty('value', '/etc/nginx\n/var/www\n');
@@ -69,9 +100,13 @@ describe('maintenance', () => {
         expect.objectContaining({ headers: { 'Content-Type': 'application/json' } }),
       ),
     );
-    post.mockResolvedValue(new Msg(false, 'SSH upload failed: destination unavailable'));
+    post.mockResolvedValue(
+      new Msg(false, 'SSH upload failed (local archive retained): destination unavailable'),
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Back up now' }));
-    expect(await screen.findByText('SSH upload failed: destination unavailable')).toBeTruthy();
+    expect(
+      await screen.findByText(/The local archive was created, but remote delivery failed/),
+    ).toBeTruthy();
   });
 
   it('reads existing site files and submits the edited config without replacing it with a template', async () => {

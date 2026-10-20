@@ -1,10 +1,16 @@
 import { useState, type ChangeEvent } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type UseMutationResult,
+} from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import {
   Alert,
   Button,
   Card,
+  Collapse,
   ConfigProvider,
   Form,
   Input,
@@ -55,16 +61,20 @@ async function save(url: string, value?: unknown) {
   if (!msg.success) throw new Error(msg.msg);
 }
 
-function BackupForm({ settings }: { settings: FullBackupSettings }) {
+function BackupForm({
+  settings,
+  mutation,
+}: {
+  settings: FullBackupSettings;
+  mutation: UseMutationResult<void, Error, FullBackupSettings>;
+}) {
   const { t } = useTranslation();
-  const client = useQueryClient();
-  const mutation = useMutation({
-    mutationFn: (value: FullBackupSettings) => save(`${endpoint}/backups/settings`, value),
-    onSuccess: () => client.invalidateQueries({ queryKey: backupQueryKey }),
-  });
+  const [form] = Form.useForm<FullBackupSettings>();
   return (
     <Form<FullBackupSettings>
+      form={form}
       layout="vertical"
+      validateMessages={{ required: t('maintenance.required') }}
       initialValues={settings}
       onFinish={(value) =>
         mutation.mutate({
@@ -73,7 +83,12 @@ function BackupForm({ settings }: { settings: FullBackupSettings }) {
         })
       }
     >
-      <Form.Item name="enabled" label={t('maintenance.enabled')} valuePropName="checked">
+      <Form.Item
+        name="enabled"
+        label={t('maintenance.enabled')}
+        extra={t('maintenance.scheduleHelp')}
+        valuePropName="checked"
+      >
         <Switch />
       </Form.Item>
       <Space wrap align="start">
@@ -84,40 +99,93 @@ function BackupForm({ settings }: { settings: FullBackupSettings }) {
         >
           <InputNumber min={1} max={8760} />
         </Form.Item>
-        <Form.Item name="keep" label={t('maintenance.keep')} rules={[{ required: true }]}>
+        <Form.Item
+          name="keep"
+          label={t('maintenance.keep')}
+          extra={t('maintenance.keepHelp')}
+          rules={[{ required: true }]}
+        >
           <InputNumber min={1} max={365} />
         </Form.Item>
       </Space>
-      <Form.Item
-        name="paths"
-        label={t('maintenance.paths')}
-        getValueProps={(value: string[]) => ({ value: value.join('\n') })}
-        getValueFromEvent={(event: ChangeEvent<HTMLTextAreaElement>) =>
-          event.target.value.split('\n')
-        }
-      >
-        <Input.TextArea rows={7} />
-      </Form.Item>
       <Alert type="info" showIcon title={t('maintenance.archiveInfo')} />
-      <Typography.Title level={5}>{t('maintenance.ssh')}</Typography.Title>
-      <Typography.Paragraph>{t('maintenance.sshInfo')}</Typography.Paragraph>
-      <Form.Item name="remoteHost" label={t('maintenance.host')}>
-        <Input placeholder="backup.example.com" />
-      </Form.Item>
-      <Space wrap align="start">
-        <Form.Item name="remoteUser" label={t('maintenance.user')}>
-          <Input />
-        </Form.Item>
-        <Form.Item name="remotePort" label={t('maintenance.port')}>
-          <InputNumber min={1} max={65535} />
-        </Form.Item>
-      </Space>
-      <Form.Item name="remotePath" label={t('maintenance.remotePath')}>
-        <Input placeholder="/backups/3x-ui" />
-      </Form.Item>
-      <Form.Item name="identityFile" label={t('maintenance.keyPath')}>
-        <Input placeholder="/root/.ssh/backup_ed25519" />
-      </Form.Item>
+      <Collapse
+        defaultActiveKey={settings.remoteHost ? ['ssh'] : []}
+        items={[
+          {
+            key: 'paths',
+            label: t('maintenance.paths'),
+            forceRender: true,
+            children: (
+              <Form.Item
+                name="paths"
+                label={t('maintenance.paths')}
+                extra={t('maintenance.pathsHelp')}
+                getValueProps={(value: string[]) => ({ value: value.join('\n') })}
+                getValueFromEvent={(event: ChangeEvent<HTMLTextAreaElement>) =>
+                  event.target.value.split('\n')
+                }
+              >
+                <Input.TextArea rows={7} />
+              </Form.Item>
+            ),
+          },
+          {
+            key: 'ssh',
+            label: t('maintenance.ssh'),
+            forceRender: true,
+            children: (
+              <>
+                <Typography.Paragraph>{t('maintenance.sshInfo')}</Typography.Paragraph>
+                <Alert type="info" showIcon title={t('maintenance.sshSetup')} />
+                <Form.Item
+                  name="remoteHost"
+                  label={t('maintenance.host')}
+                  extra={t('maintenance.hostHelp')}
+                >
+                  <Input placeholder="backup.example.com" />
+                </Form.Item>
+                <Space wrap align="start">
+                  <Form.Item
+                    name="remoteUser"
+                    label={t('maintenance.user')}
+                    dependencies={['remoteHost']}
+                    rules={[({ getFieldValue }) => ({ required: !!getFieldValue('remoteHost') })]}
+                  >
+                    <Input />
+                  </Form.Item>
+                  <Form.Item
+                    name="remotePort"
+                    label={t('maintenance.port')}
+                    dependencies={['remoteHost']}
+                    rules={[({ getFieldValue }) => ({ required: !!getFieldValue('remoteHost') })]}
+                  >
+                    <InputNumber min={1} max={65535} />
+                  </Form.Item>
+                </Space>
+                <Form.Item
+                  name="remotePath"
+                  label={t('maintenance.remotePath')}
+                  extra={t('maintenance.remotePathHelp')}
+                  dependencies={['remoteHost']}
+                  rules={[({ getFieldValue }) => ({ required: !!getFieldValue('remoteHost') })]}
+                >
+                  <Input placeholder="/backups/3x-ui" />
+                </Form.Item>
+                <Form.Item
+                  name="identityFile"
+                  label={t('maintenance.keyPath')}
+                  extra={t('maintenance.keyHelp')}
+                  dependencies={['remoteHost']}
+                  rules={[({ getFieldValue }) => ({ required: !!getFieldValue('remoteHost') })]}
+                >
+                  <Input placeholder="/root/.ssh/backup_ed25519" />
+                </Form.Item>
+              </>
+            ),
+          },
+        ]}
+      />
       {mutation.error && <Alert type="error" title={mutation.error.message} />}
       {mutation.isSuccess && <Alert type="success" title={t('maintenance.saved')} />}
       <Button type="primary" htmlType="submit" loading={mutation.isPending}>
@@ -130,18 +198,27 @@ function BackupForm({ settings }: { settings: FullBackupSettings }) {
 function BackupsTab() {
   const { t } = useTranslation();
   const client = useQueryClient();
-  const query = useQuery({ queryKey: backupQueryKey, queryFn: getBackups });
+  const query = useQuery({
+    queryKey: backupQueryKey,
+    queryFn: getBackups,
+    refetchInterval: 30_000,
+  });
   const run = useMutation({
     mutationFn: () => save(`${endpoint}/backups/run`),
     onSettled: () => client.invalidateQueries({ queryKey: backupQueryKey }),
+  });
+  const settingsMutation = useMutation({
+    mutationFn: (value: FullBackupSettings) => save(`${endpoint}/backups/settings`, value),
+    onSuccess: () => client.invalidateQueries({ queryKey: backupQueryKey }),
   });
   if (query.error) return <Alert type="error" title={query.error.message} />;
   if (!query.data) return <Spin />;
   const { settings, status, files } = query.data;
   return (
     <Space orientation="vertical" size="large" style={{ width: '100%' }}>
-      <BackupForm key={JSON.stringify(settings)} settings={settings} />
       <Card title={t('maintenance.archives')}>
+        <Typography.Paragraph>{t('maintenance.quickStart')}</Typography.Paragraph>
+        <Typography.Paragraph>{t('maintenance.downloadHelp')}</Typography.Paragraph>
         <Space wrap>
           <Button onClick={() => run.mutate()} loading={run.isPending}>
             {t('maintenance.run')}
@@ -150,10 +227,27 @@ function BackupsTab() {
         </Space>
         <Typography.Paragraph>
           {t('maintenance.lastSuccess')}:{' '}
-          {status.lastSuccess?.startsWith('0001-') ? '—' : status.lastSuccess || '—'}
+          {status.lastSuccess && !status.lastSuccess.startsWith('0001-')
+            ? new Date(status.lastSuccess).toLocaleString()
+            : '—'}
         </Typography.Paragraph>
+        {run.isSuccess && <Alert type="success" showIcon title={t('maintenance.completed')} />}
         {(run.error || status.error) && (
-          <Alert type="error" title={run.error?.message || status.error} />
+          <Alert
+            type="error"
+            showIcon
+            title={
+              (run.error?.message || status.error).includes('local archive retained')
+                ? t('maintenance.deliveryFailed')
+                : run.error?.message || status.error
+            }
+            description={
+              <details>
+                <summary>{t('maintenance.errorDetails')}</summary>
+                {run.error?.message || status.error}
+              </details>
+            }
+          />
         )}
         <Table
           rowKey="name"
@@ -175,6 +269,13 @@ function BackupsTab() {
               render: (size: number) => `${(size / 1024 / 1024).toFixed(1)} MB`,
             },
           ]}
+        />
+      </Card>
+      <Card title={t('maintenance.backupSettings')}>
+        <BackupForm
+          key={JSON.stringify(settings)}
+          settings={settings}
+          mutation={settingsMutation}
         />
       </Card>
     </Space>

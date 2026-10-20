@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, Checkbox, Modal } from 'antd';
+import { Alert, Button, Checkbox, Modal } from 'antd';
+import { Link } from 'react-router';
 import { DownloadOutlined, UploadOutlined } from '@ant-design/icons';
 
 import { HttpUtil, PromiseUtil } from '@/utils';
@@ -69,6 +70,16 @@ export default function BackupModal({
 
   return (
     <Modal open={open} title={t('pages.index.backupTitle')} footer={null} onCancel={onClose}>
+      <Alert
+        type="info"
+        showIcon
+        title={t('maintenance.databaseOnly')}
+        description={
+          <Link to="/maintenance" onClick={onClose}>
+            {t('maintenance.title')}
+          </Link>
+        }
+      />
       {isPostgres && (
         <div className="backup-description" style={{ marginBottom: 16 }}>
           {t('pages.index.backupPostgresNote')}
