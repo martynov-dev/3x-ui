@@ -32,3 +32,20 @@ For **Docker panels**, persist the private key and `known_hosts` inside the cont
 ## Verify restoration
 
 Use a separate matching Ubuntu/Debian machine to run `setup.sh --backup /path/full-backup.tar.gz --check`, then test actual restoration on a clean machine. Automatic restoration supports this fork's full Linux SQLite backups. PostgreSQL, Docker/Alpine, external firewall rules and DNS need separate handling. See the [README](../README.md) for restoration commands and publication prerequisites.
+
+### Verified VM scenario
+
+On October 20, 2026, installation and restoration were tested between two separate clean Ubuntu 24.04.5 LTS VMs (amd64, SQLite) running actual systemd:
+
+- Installation through `setup.sh`, panel/nginx startup and panel login.
+- Website creation through the panel API under the shipped systemd service restrictions, HTTP and a certificate stored outside the default paths.
+- Full backup and SSH delivery with matching SHA256.
+- `--check` without installing the panel/nginx, followed by full restoration on the second VM.
+- Preserved login, schedule/destination settings, SSH identity, executable, certificate and test Xray inbound; working HTTP/HTTPS and an active Xray listening port.
+- Another successful SSH backup after restoration without reconfiguring SSH.
+- An update through `update.sh` retaining login, settings, website and working SSH delivery.
+- Automatic backup creation and delivery by the restored scheduler: only the test database's last-attempt timestamp was made overdue; the panel's actual scheduler executed the backup.
+
+During an update, the existing `update.sh` replaces a very short panel path (such as `/`) with a random path and prints the new URL. Account migration does not guarantee that such a URL remains unchanged.
+
+The unpublished build used a local release archive; only fork file downloads were redirected to a fixture HTTP server. Fetching a published GitHub release was not covered. Debian, other OS versions/architectures, PostgreSQL and live VPN traffic restoration were also outside this run. Logs and the test archive remain locally in `.cache/vm-test/`; the archive contains a test private key.
