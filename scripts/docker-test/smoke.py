@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Exercise only the disposable compose.test.yml environment; standard library only."""
 from contextlib import closing
+import argparse
 import hashlib
 import http.cookiejar
 import io
@@ -8,6 +9,7 @@ import json
 from pathlib import Path
 import sqlite3
 import subprocess
+import sys
 import tarfile
 import tempfile
 import time
@@ -160,5 +162,40 @@ def main():
     print("ALL CHECKS PASSED. Panel: " + BASE + "/panel/maintenance", flush=True)
 
 
-if __name__ == "__main__":
+def full_check():
+    """Build current sources and run the same checks on Windows or Linux."""
+    def run(*command):
+        subprocess.run(command, cwd=ROOT, check=True)
+
+    print("Checking Docker and building the current fork...", flush=True)
+    run("docker", "info", "--format", "{{.ServerVersion}}")
+    run("docker", "build", "-t", "fork-3x-ui:test", ".")
+    run(*COMPOSE, "up", "-d", "--build")
+
+    print("Checking frontend types, lint, forms, navigation and translations...", flush=True)
+    run("docker", "build", "--target", "frontend", "-t", "fork-3x-ui:frontend-test", ".")
+    run("docker", "run", "--rm", "-e", "STORYBOOK_DISABLE_TELEMETRY=1",
+        "--mount", f"type=bind,source={ROOT / 'internal'},target=/src/internal,readonly",
+        "fork-3x-ui:frontend-test", "sh", "-c",
+        "npm run typecheck && npm run lint && npm test -- --project=unit --project=components "
+        "src/test/maintenance.test.tsx src/test/app-sidebar.test.tsx src/test/i18n-dead-keys.test.ts")
+
+    print("Checking restore validation and rollback on Linux...", flush=True)
+    run("docker", "run", "--rm", "--entrypoint", "python3",
+        "-e", "PYTHONDONTWRITEBYTECODE=1",
+        "--mount", f"type=bind,source={ROOT / 'scripts'},target=/tests,readonly",
+        "fork-3x-ui:integration", "-m", "unittest", "discover", "-s", "/tests",
+        "-p", "test_restore_backup.py", "-v")
     main()
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--full", action="store_true",
+                        help="build and start the isolated test environment, run frontend and restore tests, then integration checks")
+    args = parser.parse_args()
+    try:
+        full_check() if args.full else main()
+    except subprocess.CalledProcessError as error:
+        print("Check failed; the test environment is kept for inspection.", file=sys.stderr)
+        sys.exit(error.returncode)
