@@ -25,4 +25,4 @@ server {
 EOF
 rm -f /etc/nginx/http.d/default.conf
 nginx
-exec /app/x-ui
+exec python3 /test/start-panel.py

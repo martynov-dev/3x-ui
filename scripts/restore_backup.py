@@ -294,7 +294,10 @@ def restore(args):
                     sidecar.unlink()
             dropin = Path("/etc/systemd/system/x-ui.service.d/30-fork-nginx.conf")
             prepare(dropin)
-            dropin.write_text("[Service]\nReadWritePaths=-/etc/nginx -/var/www -/usr/share/nginx/html\n")
+            dropin.write_text(
+                "[Service]\nReadWritePaths=-/etc/nginx -/var/www -/usr/share/nginx/html\n"
+                "CapabilityBoundingSet=CAP_CHOWN CAP_DAC_OVERRIDE CAP_NET_ADMIN CAP_NET_BIND_SERVICE CAP_NET_RAW\n"
+            )
             dropin.chmod(0o644)
             run("systemctl", "daemon-reload")
             if has_nginx:
