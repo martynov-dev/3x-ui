@@ -11,6 +11,8 @@ Based on **3X-UI v3.10.2**, commit [608ef4e4010bf83e2e78328e08f77efc051ad4d7](ht
 
 ## Changes from upstream
 
+[Planned features](docs/roadmap.md)
+
 - Removed sponsor advertisements, the sponsors page and advertising requests.
 - Added manual and scheduled full backups: configurable intervals, local retention, additional source paths and optional SSH delivery to another device.
 - Added nginx configuration and `index.html` editing, an HTTP template, `nginx -t` validation and file rollback if applying changes fails.
