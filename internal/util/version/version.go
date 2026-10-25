@@ -1,4 +1,4 @@
-// Package version compares 3x-ui release versions ("v3.8.0" or "3.8.0").
+// Package version compares upstream and fork release versions of 3x-ui.
 package version
 
 import (
@@ -7,7 +7,8 @@ import (
 )
 
 // Compare returns -1, 0 or 1 as a is older than, equal to or newer than b, and
-// false when either side is not a plain MAJOR.MINOR.PATCH version.
+// false when either side is not MAJOR.MINOR.PATCH with an optional -fork.N suffix.
+// Fork revisions sort after the corresponding upstream version.
 func Compare(a, b string) (int, bool) {
 	aParts, okA := parse(a)
 	bParts, okB := parse(b)
@@ -30,15 +31,23 @@ func Normalize(v string) string {
 	return strings.TrimPrefix(strings.TrimSpace(v), "v")
 }
 
-func parse(v string) ([3]int, bool) {
-	var result [3]int
-	parts := strings.Split(Normalize(v), ".")
+func parse(v string) ([4]int, bool) {
+	var result [4]int
+	base, revision, fork := strings.Cut(Normalize(v), "-fork.")
+	if fork {
+		n, err := strconv.Atoi(revision)
+		if err != nil || n <= 0 {
+			return result, false
+		}
+		result[3] = n
+	}
+	parts := strings.Split(base, ".")
 	if len(parts) != 3 {
 		return result, false
 	}
 	for i, part := range parts {
 		n, err := strconv.Atoi(part)
-		if err != nil {
+		if err != nil || n < 0 {
 			return result, false
 		}
 		result[i] = n
