@@ -338,8 +338,9 @@ function SiteEditor({ site }: { site: NginxSite }) {
     >
       <Alert type="info" showIcon title={t('maintenance.nginxInfo')} />
       {sites.error && <Alert type="warning" title={sites.error.message} />}
-      <Form.Item label={t('maintenance.detectedSites')}>
+      <Form.Item label={t('maintenance.detectedSites')} htmlFor="maintenance-detected-sites">
         <Select
+          id="maintenance-detected-sites"
           allowClear
           options={(sites.data ?? []).map((value) => ({
             value: value.configPath,
