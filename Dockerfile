@@ -15,6 +15,7 @@ RUN npm run build
 FROM golang:1.27-alpine AS builder
 WORKDIR /app
 ARG TARGETARCH
+ARG TARGETVARIANT
 
 RUN apk --no-cache --update add \
   build-base \
@@ -30,7 +31,7 @@ ENV CGO_CFLAGS="-D_LARGEFILE64_SOURCE"
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
     go build -ldflags "-w -s" -o build/x-ui main.go
-RUN ./DockerInit.sh "$TARGETARCH"
+RUN ./DockerInit.sh "$TARGETARCH" "$TARGETVARIANT"
 
 # ========================================================
 # Stage: Final Image of 3x-ui
