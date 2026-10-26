@@ -4,7 +4,7 @@
 
 Fork de [MHSanaei/3x-ui](https://github.com/MHSanaei/3x-ui), un panel para administrar Xray/VPN. Su objetivo es eliminar la publicidad, respaldar el panel junto con nginx y el sitio web de cobertura de la VPN, y configurar ese sitio desde el panel.
 
-Basado en **3X-UI v3.10.2**, commit [608ef4e4010bf83e2e78328e08f77efc051ad4d7](https://github.com/MHSanaei/3x-ui/commit/608ef4e4010bf83e2e78328e08f77efc051ad4d7). Esta es la versión original desde la que comenzó el desarrollo del fork.
+Este fork recibe actualizaciones del repositorio original y conserva sus propias funciones. Las notas de cada lanzamiento indican la versión original incluida.
 
 > [!IMPORTANT]
 > Este proyecto está destinado únicamente al uso personal. Por favor, no lo uses para fines ilegales ni en un entorno de producción.

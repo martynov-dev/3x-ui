@@ -4,7 +4,7 @@
 
 本项目是 Xray/VPN 管理面板 [MHSanaei/3x-ui](https://github.com/MHSanaei/3x-ui) 的分支。目标是移除广告，备份面板、nginx 和 VPN 伪装网站，并通过面板配置网站。
 
-基于 **3X-UI v3.10.2**，起始提交为 [608ef4e4010bf83e2e78328e08f77efc051ad4d7](https://github.com/MHSanaei/3x-ui/commit/608ef4e4010bf83e2e78328e08f77efc051ad4d7)。这是本分支开始开发时采用的上游版本。
+本分支在保留自身功能的同时接收原始仓库的更新。每个发行版的说明会注明其中包含的上游版本。
 
 > [!IMPORTANT]
 > 本项目仅供个人使用。请勿将其用于非法目的，也请勿在生产环境中使用。

@@ -4,7 +4,7 @@
 
 [MHSanaei/3x-ui](https://github.com/MHSanaei/3x-ui) Xray/VPN yönetim panelinin bir çatalıdır. Amacı reklamları kaldırmak, paneli nginx ve VPN örtü sitesiyle birlikte yedeklemek ve siteyi panelden yapılandırmaktır.
 
-Temel sürüm **3X-UI v3.10.2**, commit [608ef4e4010bf83e2e78328e08f77efc051ad4d7](https://github.com/MHSanaei/3x-ui/commit/608ef4e4010bf83e2e78328e08f77efc051ad4d7). Çatalın geliştirilmesine bu özgün sürümden başlanmıştır.
+Bu çatal, kendi özelliklerini koruyarak özgün depodan güncellemeler alır. Her sürümün notlarında, içerdiği özgün proje sürümü belirtilir.
 
 > [!IMPORTANT]
 > Bu proje yalnızca kişisel kullanım için tasarlanmıştır. Lütfen yasadışı amaçlar için veya üretim (production) ortamında kullanmayın.
