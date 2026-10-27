@@ -1693,6 +1693,17 @@
       "ipLimitAllowlist": "IP limit allowlist",
       "ipLimitAllowlistDesc": "Addresses and networks that the IP limit never counts and never bans, so a shared office or campus address cannot use up a client's limit. Comma-separated, IP or CIDR.",
       "subBalancers": {
+        "strategyFailover": "Primary → fallback",
+        "primaryInbound": "Primary inbound",
+        "fallbackInbound": "Fallback inbound",
+        "failoverHelp": "Probe the primary through its tunnel. Use the fallback while the primary is unavailable; new connections return after recovery. Select exactly two inbounds.",
+        "audience": "Who receives this profile",
+        "audienceSelected": "Selected clients only",
+        "audienceAll": "All eligible subscribers",
+        "clients": "Clients",
+        "audienceHelp": "Clients sharing one subscription ID receive the same profiles. Clients must also have access to both failover inbounds.",
+        "errClientsRequired": "Select at least one client",
+        "errFailoverMembers": "Select two distinct inbounds and assign primary and fallback",
         "menu": "Sub Balancers",
         "title": "Subscription balancer",
         "add": "Add balancer",
@@ -1728,7 +1739,7 @@
         "tabObservatory": "Observatory",
         "observatory": {
           "title": "Balancer observatory",
-          "desc": "Probe parameters for the burst observatory emitted into each leastPing/leastLoad balancer profile. random/roundRobin balancers get no observatory. Stored as a panel-wide JSON-sub setting.",
+          "desc": "Probe parameters for the burst observatory emitted into each leastPing/leastLoad/failover balancer profile. random/roundRobin balancers get no observatory. Stored as a panel-wide JSON-sub setting.",
           "destination": "Probe URL",
           "destinationDesc": "URL the client pings to measure each member outbound.",
           "connectivity": "Connectivity URL",
@@ -1741,7 +1752,7 @@
           "samplingDesc": "Number of consecutive probes averaged for stability.",
           "httpMethod": "HTTP method",
           "httpMethodDesc": "Method used for probe requests.",
-          "note": "leastPing/leastLoad balancers always carry a burst observatory. This switch customises its probe parameters — turn it off to use the built-in defaults. Changes apply after a panel restart."
+          "note": "leastPing/leastLoad/failover balancers always carry a burst observatory. This switch customises its probe parameters — turn it off to use the built-in defaults. Changes apply after a panel restart."
         }
       },
       "subCalendarExpireInclusive": "Month-end subscription expiry display",

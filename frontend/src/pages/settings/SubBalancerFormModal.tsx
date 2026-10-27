@@ -6,6 +6,7 @@ import { Controller, FormProvider, useForm, useWatch } from 'react-hook-form';
 import { FormField, rhfZodValidate } from '@/components/form/rhf';
 import SelectAllClearButtons from '@/components/form/SelectAllClearButtons';
 import { useInboundOptions } from '@/api/queries/useInboundOptions';
+import { useClientOptions } from '@/api/queries/useClientOptions';
 import { formatInboundLabel } from '@/lib/inbounds/label';
 import {
   SubBalancerFormSchema,
@@ -32,6 +33,7 @@ const STRATEGY_LABEL_KEYS: Record<SubBalancerStrategy, string> = {
   leastPing: 'pages.settings.subBalancers.strategyLeastPing',
   random: 'pages.settings.subBalancers.strategyRandom',
   roundRobin: 'pages.settings.subBalancers.strategyRoundRobin',
+  failover: 'pages.settings.subBalancers.strategyFailover',
 };
 
 function initialState(balancer: SubBalancer | null): SubBalancerFormValues {
@@ -42,6 +44,10 @@ function initialState(balancer: SubBalancer | null): SubBalancerFormValues {
     memberWeights: balancer?.memberWeights ? { ...balancer.memberWeights } : undefined,
     sortOrder: balancer?.sortOrder ?? 1,
     enabled: balancer?.enabled ?? true,
+    audience: balancer ? balancer.audience || 'all' : 'selected',
+    clientEmails: balancer?.clientEmails ?? [],
+    primaryInboundId: balancer?.primaryInboundId || undefined,
+    fallbackInboundId: balancer?.fallbackInboundId || undefined,
   };
 }
 
@@ -70,6 +76,8 @@ export default function SubBalancerFormModal({
 
   const inboundIds = useWatch({ control: methods.control, name: 'inboundIds' });
   const strategy = useWatch({ control: methods.control, name: 'strategy' });
+  const audience = useWatch({ control: methods.control, name: 'audience' });
+  const { data: clientEmails = [], isError: clientsError } = useClientOptions(open);
   // Weights only make sense for leastLoad; the fields hide but keep their
   // values so an accidental toggle away and back loses nothing until submit.
   const showWeights = strategy === 'leastLoad';
@@ -101,6 +109,11 @@ export default function SubBalancerFormModal({
     // xray ignores costs on every strategy but leastLoad — never send them.
     if (candidate.strategy !== 'leastLoad') {
       delete candidate.memberWeights;
+    }
+    if (candidate.audience !== 'selected') candidate.clientEmails = [];
+    if (candidate.strategy !== 'failover') {
+      delete candidate.primaryInboundId;
+      delete candidate.fallbackInboundId;
     }
     const parsed = SubBalancerFormSchema.safeParse(candidate);
     if (!parsed.success) {
@@ -177,6 +190,54 @@ export default function SubBalancerFormModal({
             value={inboundIds || []}
             onChange={(v) => methods.setValue('inboundIds', v, { shouldDirty: true })}
           />
+
+          {strategy === 'failover' && (
+            <>
+              <FormField
+                label={t('pages.settings.subBalancers.primaryInbound')}
+                name="primaryInboundId"
+                required
+              >
+                <Select
+                  options={inboundOptions.filter((option) => inboundIds?.includes(option.value))}
+                />
+              </FormField>
+              <FormField
+                label={t('pages.settings.subBalancers.fallbackInbound')}
+                name="fallbackInboundId"
+                required
+              >
+                <Select
+                  options={inboundOptions.filter((option) => inboundIds?.includes(option.value))}
+                />
+              </FormField>
+              <p>{t('pages.settings.subBalancers.failoverHelp')}</p>
+            </>
+          )}
+
+          <FormField label={t('pages.settings.subBalancers.audience')} name="audience">
+            <Select
+              options={[
+                { value: 'selected', label: t('pages.settings.subBalancers.audienceSelected') },
+                { value: 'all', label: t('pages.settings.subBalancers.audienceAll') },
+              ]}
+            />
+          </FormField>
+          {audience === 'selected' && (
+            <FormField
+              label={t('pages.settings.subBalancers.clients')}
+              name="clientEmails"
+              required
+            >
+              <Select
+                mode="multiple"
+                showSearch={{ optionFilterProp: 'label' }}
+                status={clientsError ? 'error' : undefined}
+                options={clientEmails.map((email) => ({ value: email, label: email }))}
+              />
+            </FormField>
+          )}
+          <p>{t('pages.settings.subBalancers.audienceHelp')}</p>
 
           {showWeights && (inboundIds ?? []).length > 0 && (
             <Form.Item

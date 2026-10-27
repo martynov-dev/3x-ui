@@ -33,9 +33,12 @@ func NewSubBalancerController(g *gin.RouterGroup) *SubBalancerController {
 // Update can keep the stored value when the key is absent; a bad value is a 400.
 func parseSubBalancerForm(c *gin.Context) (*model.SubBalancer, *bool, error) {
 	form := struct {
-		Remark    string `form:"remark"`
-		Strategy  string `form:"strategy"`
-		SortOrder int    `form:"sortOrder"`
+		Remark            string `form:"remark"`
+		Strategy          string `form:"strategy"`
+		SortOrder         int    `form:"sortOrder"`
+		Audience          string `form:"audience"`
+		PrimaryInboundId  int    `form:"primaryInboundId"`
+		FallbackInboundId int    `form:"fallbackInboundId"`
 	}{}
 	if err := c.ShouldBind(&form); err != nil {
 		return nil, nil, err
@@ -49,9 +52,13 @@ func parseSubBalancerForm(c *gin.Context) (*model.SubBalancer, *bool, error) {
 		enabled = &v
 	}
 	balancer := &model.SubBalancer{
-		Remark:    form.Remark,
-		Strategy:  form.Strategy,
-		SortOrder: form.SortOrder,
+		Remark:            form.Remark,
+		Strategy:          form.Strategy,
+		SortOrder:         form.SortOrder,
+		Audience:          form.Audience,
+		ClientEmails:      c.PostFormArray("clientEmails"),
+		PrimaryInboundId:  form.PrimaryInboundId,
+		FallbackInboundId: form.FallbackInboundId,
 	}
 	for _, raw := range c.PostFormArray("inboundIds") {
 		id, err := strconv.Atoi(raw)

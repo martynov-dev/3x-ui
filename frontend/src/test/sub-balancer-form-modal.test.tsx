@@ -4,6 +4,7 @@ import { fireEvent, waitFor } from '@testing-library/react';
 import SubBalancerFormModal from '@/pages/settings/SubBalancerFormModal';
 import type { SubBalancer } from '@/schemas/subBalancer';
 import { renderWithProviders } from './test-utils';
+import { SubBalancerFormSchema } from '@/schemas/subBalancer';
 
 vi.mock('@/api/queries/useInboundOptions', () => ({
   useInboundOptions: () => ({
@@ -14,6 +15,10 @@ vi.mock('@/api/queries/useInboundOptions', () => ({
     ],
     isLoading: false,
   }),
+}));
+
+vi.mock('@/api/queries/useClientOptions', () => ({
+  useClientOptions: () => ({ data: ['tester'], isError: false }),
 }));
 
 function renderModal(balancer: SubBalancer | null, onConfirm = vi.fn()) {
@@ -64,6 +69,18 @@ function selectInbound(optionTitle: string) {
   fireEvent.keyDown(multi, { key: 'Escape' });
 }
 
+function selectClient() {
+  const selects = document.querySelectorAll('.ant-select-multiple');
+  const select = selects[selects.length - 1];
+  fireEvent.mouseDown(select);
+  const option = Array.from(document.querySelectorAll('.ant-select-item-option')).find(
+    (o) => o.getAttribute('title') === 'tester',
+  );
+  if (!option) throw new Error('Client option missing');
+  fireEvent.click(option);
+  fireEvent.keyDown(select, { key: 'Escape' });
+}
+
 function selectStrategy(label: string) {
   const single = Array.from(document.querySelectorAll('.ant-select')).find(
     (s) => !s.classList.contains('ant-select-multiple'),
@@ -85,6 +102,59 @@ function weightInputs(): HTMLInputElement[] {
 }
 
 describe('SubBalancerFormModal', () => {
+  it('defaults new profiles to selected clients and refuses an empty audience', async () => {
+    const { onConfirm } = renderModal(null);
+    fireEvent.change(remarkInput(), { target: { value: 'private' } });
+    selectInbound('First');
+    expect(document.querySelectorAll('.ant-select-multiple')).toHaveLength(2);
+    fireEvent.click(primaryButton());
+    await waitFor(() => expect(document.body.textContent).toContain('Select at least one client'));
+    expect(onConfirm).not.toHaveBeenCalled();
+  });
+
+  it('retains client restrictions and primary/fallback when editing', async () => {
+    const { onConfirm } = renderModal({
+      id: 10,
+      remark: 'priority',
+      strategy: 'failover',
+      inboundIds: [1, 2],
+      audience: 'selected',
+      clientEmails: ['tester'],
+      primaryInboundId: 2,
+      fallbackInboundId: 1,
+      sortOrder: 1,
+      enabled: true,
+    });
+    fireEvent.click(primaryButton());
+    await waitFor(() =>
+      expect(onConfirm).toHaveBeenCalledWith(
+        expect.objectContaining({
+          strategy: 'failover',
+          audience: 'selected',
+          clientEmails: ['tester'],
+          primaryInboundId: 2,
+          fallbackInboundId: 1,
+        }),
+      ),
+    );
+  });
+
+  it('rejects identical primary/fallback and non-member primary in the form contract', () => {
+    const base = {
+      remark: 'priority',
+      strategy: 'failover',
+      inboundIds: [1, 2],
+      audience: 'selected',
+      clientEmails: ['tester'],
+      primaryInboundId: 1,
+      fallbackInboundId: 2,
+      sortOrder: 1,
+      enabled: true,
+    };
+    expect(SubBalancerFormSchema.safeParse(base).success).toBe(true);
+    expect(SubBalancerFormSchema.safeParse({ ...base, fallbackInboundId: 1 }).success).toBe(false);
+    expect(SubBalancerFormSchema.safeParse({ ...base, primaryInboundId: 3 }).success).toBe(false);
+  });
   it('shows no validation errors when freshly opened in add mode', () => {
     renderModal(null);
     expect(document.querySelector('.ant-modal')).toBeTruthy();
@@ -103,11 +173,14 @@ describe('SubBalancerFormModal', () => {
     const { onConfirm } = renderModal(null);
     fireEvent.change(remarkInput(), { target: { value: '  auto  ' } });
     selectInbound('First');
+    selectClient();
     fireEvent.click(primaryButton());
     await waitFor(() => expect(onConfirm).toHaveBeenCalledTimes(1));
     expect(onConfirm).toHaveBeenCalledWith({
       remark: 'auto',
       strategy: 'random',
+      audience: 'selected',
+      clientEmails: ['tester'],
       inboundIds: [1],
       sortOrder: 1,
       enabled: true,
@@ -129,6 +202,8 @@ describe('SubBalancerFormModal', () => {
     expect(onConfirm).toHaveBeenCalledWith({
       remark: 'existing',
       strategy: 'leastPing',
+      audience: 'all',
+      clientEmails: [],
       inboundIds: [2],
       sortOrder: 3,
       enabled: false,
@@ -162,6 +237,7 @@ describe('SubBalancerFormModal', () => {
     selectInbound('First');
     selectInbound('Second');
     selectStrategy('Least load');
+    selectClient();
     await waitFor(() => expect(weightInputs()).toHaveLength(2));
 
     fireEvent.change(weightInputs()[0], { target: { value: '0.5' } });
@@ -177,6 +253,7 @@ describe('SubBalancerFormModal', () => {
     fireEvent.change(remarkInput(), { target: { value: 'plain' } });
     selectInbound('First');
     selectStrategy('Least load');
+    selectClient();
     await waitFor(() => expect(weightInputs()).toHaveLength(1));
     fireEvent.change(weightInputs()[0], { target: { value: '0.5' } });
     selectStrategy('Random');
@@ -186,6 +263,8 @@ describe('SubBalancerFormModal', () => {
     expect(onConfirm).toHaveBeenCalledWith({
       remark: 'plain',
       strategy: 'random',
+      audience: 'selected',
+      clientEmails: ['tester'],
       inboundIds: [1],
       sortOrder: 1,
       enabled: true,

@@ -92,6 +92,10 @@ export default function SubscriptionBalancersTab({
       strategy: balancer.strategy,
       inboundIds: balancer.inboundIds,
       memberWeights: balancer.memberWeights ?? undefined,
+      audience: balancer.audience || 'all',
+      clientEmails: balancer.clientEmails ?? [],
+      primaryInboundId: balancer.primaryInboundId || undefined,
+      fallbackInboundId: balancer.fallbackInboundId || undefined,
       sortOrder: balancer.sortOrder,
       enabled: !balancer.enabled,
     });
@@ -136,6 +140,14 @@ export default function SubscriptionBalancersTab({
       render: (strategy: string) => (
         <Tag color={STRATEGY_COLORS[strategy] ?? 'default'}>{strategy}</Tag>
       ),
+    },
+    {
+      title: t('pages.settings.subBalancers.audience'),
+      key: 'audience',
+      render: (_: unknown, balancer: SubBalancer) =>
+        balancer.audience === 'selected'
+          ? (balancer.clientEmails ?? []).join(', ')
+          : t('pages.settings.subBalancers.audienceAll'),
     },
     {
       title: t('pages.settings.subBalancers.inbounds'),

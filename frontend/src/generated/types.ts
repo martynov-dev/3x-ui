@@ -1089,11 +1089,15 @@ export interface Setting {
 }
 
 export interface SubBalancer {
+  audience?: string;
+  clientEmails?: string[];
   createdAt: number;
   enabled: boolean;
+  fallbackInboundId?: number;
   id: number;
   inboundIds: number[];
   memberWeights?: Record<number, number>;
+  primaryInboundId?: number;
   remark: string;
   sortOrder: number;
   strategy: string;

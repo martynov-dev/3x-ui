@@ -2,11 +2,14 @@ package sub
 
 import (
 	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 
 	"github.com/mhsanaei/3x-ui/v3/internal/database"
 	"github.com/mhsanaei/3x-ui/v3/internal/database/model"
+	"github.com/mhsanaei/3x-ui/v3/internal/web/service"
 )
 
 func seedSubBalancer(t *testing.T, b *model.SubBalancer) *model.SubBalancer {
@@ -15,6 +18,137 @@ func seedSubBalancer(t *testing.T, b *model.SubBalancer) *model.SubBalancer {
 		t.Fatalf("seed balancer: %v", err)
 	}
 	return b
+}
+
+func TestSubJson_SelectedClientsFailover(t *testing.T) {
+	seedSubDB(t)
+	primary := seedSubInbound(t, "selected", "primary", 4901, 2, wsTLSStream)
+	fallback := seedSubInbound(t, "selected", "fallback", 4902, 1, wsTLSStream)
+	// Both subscribers have the same inbounds; audience must be the only
+	// difference determining whether the extra document is emitted.
+	other := model.ClientRecord{Email: "other@e", SubID: "other", UUID: "11111111-2222-4333-8444-111111111111", Enable: true}
+	if err := database.GetDB().Create(&other).Error; err != nil {
+		t.Fatal(err)
+	}
+	for _, id := range []int{primary.Id, fallback.Id} {
+		if err := database.GetDB().Create(&model.ClientInbound{ClientId: other.Id, InboundId: id}).Error; err != nil {
+			t.Fatal(err)
+		}
+	}
+	b := seedSubBalancer(t, &model.SubBalancer{
+		Remark: "priority", Strategy: "failover", InboundIds: []int{primary.Id, fallback.Id},
+		PrimaryInboundId: primary.Id, FallbackInboundId: fallback.Id,
+		Audience: "selected", ClientEmails: []string{"primary@e"}, SortOrder: 1, Enabled: true,
+	})
+	js := NewSubJsonService("", "", "", "", NewSubService(""))
+	// The direct JSON URL and auto-detection on the existing URL must enforce
+	// the same audience; switching import formats must not bypass it.
+	router := newSubscriptionTestRouter(subscriptionTestRouterConfig{
+		jsonAutoDetect: true, jsonUserAgentRegex: "(?i)incy",
+	})
+	for _, subID := range []string{"selected", "other"} {
+		for _, path := range []string{"/json/" + subID + "?view=raw", "/sub/" + subID} {
+			req := httptest.NewRequest(http.MethodGet, path, nil)
+			req.Header.Set("User-Agent", "Incy/2.6.5")
+			resp := httptest.NewRecorder()
+			router.ServeHTTP(resp, req)
+			if resp.Code != http.StatusOK {
+				t.Fatalf("%s: HTTP %d", path, resp.Code)
+			}
+			got := findDocByRemarks(parseSubJsonDocs(t, resp.Body.String()), "priority") != nil
+			if got != (subID == "selected") {
+				t.Fatalf("%s: audience bypass", path)
+			}
+		}
+	}
+	for _, subID := range []string{"selected", "other"} {
+		out, _, err := js.GetJson(subID, "req.example.com", true)
+		if err != nil {
+			t.Fatal(err)
+		}
+		docs := parseSubJsonDocs(t, out)
+		doc := findDocByRemarks(docs, "priority")
+		if subID == "other" {
+			if doc != nil || len(docs) != 2 {
+				t.Fatalf("unselected subscriber received balancer: %s", out)
+			}
+			continue
+		}
+		if doc == nil {
+			t.Fatal("selected subscriber missing failover")
+		}
+		routing := doc["routing"].(map[string]any)
+		bal := routing["balancers"].([]any)[0].(map[string]any)
+		if got := strings.Join(stringify(bal["selector"].([]any)), ","); got != "bal-1-primary" {
+			t.Fatalf("selector = %s", got)
+		}
+		if bal["fallbackTag"] != "bal-1-fallback" {
+			t.Fatalf("fallback = %v", bal["fallbackTag"])
+		}
+		if bal["strategy"].(map[string]any)["type"] != "leastPing" {
+			t.Fatal("failover must compile to observed leastPing")
+		}
+		obs := doc["burstObservatory"].(map[string]any)
+		if got := strings.Join(stringify(obs["subjectSelector"].([]any)), ","); got != "bal-1-primary" {
+			t.Fatalf("probes = %s", got)
+		}
+	}
+	// Actual tunnel authorization is separate from profile visibility. Once
+	// detached, this account gets neither the standalone fallback nor its UUID
+	// registered in the fallback inbound, in any subscription format.
+	if err := database.GetDB().Where("client_id = ? AND inbound_id = ?", other.Id, fallback.Id).Delete(&model.ClientInbound{}).Error; err != nil {
+		t.Fatal(err)
+	}
+	denied, _, err := js.GetJson("other", "req.example.com", true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(parseSubJsonDocs(t, denied)) != 1 {
+		t.Fatal("detached client received fallback in JSON")
+	}
+	links, _, _, _, err := NewSubService("").GetSubs("other", "req.example.com")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(links) != 1 {
+		t.Fatal("detached client received fallback in raw subscription")
+	}
+	authorized, err := (&service.InboundService{}).ListClientsForInbound(fallback.Id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, client := range authorized {
+		if client.Email == other.Email {
+			t.Fatal("detached identity still authorized on fallback")
+		}
+	}
+	// An empty selected audience must never accidentally become global.
+	b.ClientEmails = nil
+	if err := database.GetDB().Save(b).Error; err != nil {
+		t.Fatal(err)
+	}
+	out, _, err := js.GetJson("selected", "req.example.com", true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if findDocByRemarks(parseSubJsonDocs(t, out), "priority") != nil {
+		t.Fatal("empty audience leaked profile")
+	}
+	// Restore the audience but remove fallback access: no partial profile.
+	b.ClientEmails = []string{"primary@e"}
+	if err := database.GetDB().Save(b).Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := database.GetDB().Model(&model.Inbound{}).Where("id = ?", fallback.Id).Update("enable", false).Error; err != nil {
+		t.Fatal(err)
+	}
+	out, _, err = js.GetJson("selected", "req.example.com", true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if findDocByRemarks(parseSubJsonDocs(t, out), "priority") != nil {
+		t.Fatal("partial failover profile emitted")
+	}
 }
 
 func parseSubJsonDocs(t *testing.T, out string) []map[string]any {

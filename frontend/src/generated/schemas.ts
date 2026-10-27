@@ -4756,6 +4756,16 @@ export const SCHEMAS: Record<string, unknown> = {
   "SubBalancer": {
     "description": "SubBalancer is one extra JSON-subscription config document whose members are\nthe selected inbounds' proxy outbounds. SortOrder shares SubSortIndex semantics.",
     "properties": {
+      "audience": {
+        "description": "Empty Audience preserves legacy balancers shared with all subscribers.",
+        "type": "string"
+      },
+      "clientEmails": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
       "createdAt": {
         "example": 1710000000000,
         "format": "int64",
@@ -4765,6 +4775,9 @@ export const SCHEMAS: Record<string, unknown> = {
         "description": "No gorm default:true — a bool default makes an explicit false at insert\ncollapse back to the column default (zero value is skipped).",
         "example": true,
         "type": "boolean"
+      },
+      "fallbackInboundId": {
+        "type": "integer"
       },
       "id": {
         "example": 1,
@@ -4787,6 +4800,9 @@ export const SCHEMAS: Record<string, unknown> = {
         "description": "inboundId -\u003e leastLoad weight; absent entries mean 1.0. Only meaningful\nwith Strategy \"leastLoad\" — xray ignores costs on every other strategy.",
         "type": "object"
       },
+      "primaryInboundId": {
+        "type": "integer"
+      },
       "remark": {
         "example": "auto-fastest",
         "maxLength": 256,
@@ -4802,7 +4818,8 @@ export const SCHEMAS: Record<string, unknown> = {
           "leastLoad",
           "leastPing",
           "random",
-          "roundRobin"
+          "roundRobin",
+          "failover"
         ],
         "example": "random",
         "type": "string"

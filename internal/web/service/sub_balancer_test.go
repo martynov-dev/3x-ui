@@ -15,6 +15,69 @@ import (
 
 var subBalancerLoggerOnce sync.Once
 
+func TestSubBalancerServiceFailoverAudience(t *testing.T) {
+	setupSubBalancerDB(t)
+	svc := &SubBalancerService{}
+	valid := func() *model.SubBalancer {
+		return &model.SubBalancer{
+			Remark: "priority", Strategy: "failover", InboundIds: []int{1, 2},
+			PrimaryInboundId: 1, FallbackInboundId: 2,
+			Audience: "selected", ClientEmails: []string{" tester ", "tester"}, Enabled: true,
+		}
+	}
+	created, err := svc.Create(valid())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(created.ClientEmails) != 1 || created.ClientEmails[0] != "tester" {
+		t.Fatal("client selection not normalized")
+	}
+	loaded, err := svc.Get(created.Id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if loaded.Audience != "selected" || loaded.PrimaryInboundId != 1 || loaded.FallbackInboundId != 2 {
+		t.Fatalf("lost configuration: %+v", loaded)
+	}
+	for _, tc := range []struct {
+		name   string
+		mutate func(*model.SubBalancer)
+	}{
+		{"empty audience", func(b *model.SubBalancer) { b.ClientEmails = nil }},
+		{"invalid audience", func(b *model.SubBalancer) { b.Audience = "unknown" }},
+		{"same endpoints", func(b *model.SubBalancer) { b.FallbackInboundId = 1 }},
+		{"missing endpoint", func(b *model.SubBalancer) { b.PrimaryInboundId = 3 }},
+		{"extra member", func(b *model.SubBalancer) { b.InboundIds = append(b.InboundIds, 3) }},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			b := valid()
+			tc.mutate(b)
+			if _, err := svc.Create(b); err == nil {
+				t.Fatal("expected validation failure")
+			}
+		})
+	}
+	update := valid()
+	update.ClientEmails = []string{"second"}
+	update.PrimaryInboundId, update.FallbackInboundId = 2, 1
+	updated, err := svc.Update(created.Id, update, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if updated.ClientEmails[0] != "second" || updated.PrimaryInboundId != 2 || updated.FallbackInboundId != 1 {
+		t.Fatal("update did not persist restrictions and priority")
+	}
+	legacy := valid()
+	legacy.Audience, legacy.ClientEmails = "", nil
+	updated, err = svc.Update(created.Id, legacy, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if updated.Audience != "selected" || len(updated.ClientEmails) != 1 || updated.ClientEmails[0] != "second" {
+		t.Fatal("legacy update broadened audience")
+	}
+}
+
 func setupSubBalancerDB(t *testing.T) {
 	t.Helper()
 	subBalancerLoggerOnce.Do(func() { xuilogger.InitLogger(logging.ERROR) })

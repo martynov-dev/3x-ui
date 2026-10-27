@@ -1184,14 +1184,20 @@ export const EXAMPLES: Record<string, unknown> = {
     "value": ""
   },
   "SubBalancer": {
+    "audience": "",
+    "clientEmails": [
+      ""
+    ],
     "createdAt": 1710000000000,
     "enabled": true,
+    "fallbackInboundId": 0,
     "id": 1,
     "inboundIds": [
       1,
       3
     ],
     "memberWeights": {},
+    "primaryInboundId": 0,
     "remark": "auto-fastest",
     "sortOrder": 1,
     "strategy": "random",

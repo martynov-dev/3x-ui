@@ -15,6 +15,7 @@ var subBalancerStrategies = map[string]struct{}{
 	"leastPing":  {},
 	"random":     {},
 	"roundRobin": {},
+	"failover":   {},
 }
 
 // SubBalancerService manages client-side JSON-subscription balancers; rows
@@ -37,6 +38,32 @@ func (s *SubBalancerService) validate(b *model.SubBalancer) error {
 	}
 	if len(b.InboundIds) == 0 {
 		return common.NewError("balancer must select at least one inbound")
+	}
+	if b.Audience != "" && b.Audience != "all" && b.Audience != "selected" {
+		return common.NewError("invalid balancer audience")
+	}
+	if b.Audience == "selected" {
+		var emails []string
+		for _, email := range b.ClientEmails {
+			email = strings.TrimSpace(email)
+			if email != "" && !slices.Contains(emails, email) {
+				emails = append(emails, email)
+			}
+		}
+		if len(emails) == 0 {
+			return common.NewError("balancer must select at least one client")
+		}
+		b.ClientEmails = emails
+	} else {
+		b.ClientEmails = nil
+	}
+	if b.Strategy == "failover" {
+		if len(b.InboundIds) != 2 || b.PrimaryInboundId < 1 || b.FallbackInboundId < 1 || b.PrimaryInboundId == b.FallbackInboundId ||
+			!slices.Contains(b.InboundIds, b.PrimaryInboundId) || !slices.Contains(b.InboundIds, b.FallbackInboundId) {
+			return common.NewError("failover requires two distinct members: primary and fallback")
+		}
+	} else {
+		b.PrimaryInboundId, b.FallbackInboundId = 0, 0
 	}
 	if err := s.validateWeights(b); err != nil {
 		return err
@@ -103,17 +130,27 @@ func (s *SubBalancerService) Create(balancer *model.SubBalancer) (*model.SubBala
 }
 
 func (s *SubBalancerService) Update(id int, balancer *model.SubBalancer, enabled *bool) (*model.SubBalancer, error) {
-	if err := s.validate(balancer); err != nil {
-		return nil, err
-	}
 	current, err := s.Get(id)
 	if err != nil {
+		return nil, err
+	}
+	// Older API clients do not send audience fields. Never broaden a restricted
+	// balancer unless the caller explicitly chooses "all".
+	if balancer.Audience == "" && current.Audience == "selected" {
+		balancer.Audience = current.Audience
+		balancer.ClientEmails = current.ClientEmails
+	}
+	if err := s.validate(balancer); err != nil {
 		return nil, err
 	}
 	current.Remark = balancer.Remark
 	current.Strategy = balancer.Strategy
 	current.InboundIds = balancer.InboundIds
 	current.MemberWeights = balancer.MemberWeights
+	current.Audience = balancer.Audience
+	current.ClientEmails = balancer.ClientEmails
+	current.PrimaryInboundId = balancer.PrimaryInboundId
+	current.FallbackInboundId = balancer.FallbackInboundId
 	current.SortOrder = balancer.SortOrder
 	if enabled != nil {
 		current.Enabled = *enabled

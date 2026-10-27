@@ -1469,8 +1469,13 @@ type OutboundSubscription struct {
 type SubBalancer struct {
 	Id         int    `json:"id" form:"id" gorm:"primaryKey;autoIncrement" example:"1"`
 	Remark     string `json:"remark" form:"remark" validate:"required,max=256" example:"auto-fastest"`
-	Strategy   string `json:"strategy" form:"strategy" validate:"omitempty,oneof=leastLoad leastPing random roundRobin" example:"random"`
+	Strategy   string `json:"strategy" form:"strategy" validate:"omitempty,oneof=leastLoad leastPing random roundRobin failover" example:"random"`
 	InboundIds []int  `json:"inboundIds" form:"inboundIds" gorm:"serializer:json;column:inbound_ids" example:"[1,3]"`
+	// Empty Audience preserves legacy balancers shared with all subscribers.
+	Audience          string   `json:"audience,omitempty" form:"audience"`
+	ClientEmails      []string `json:"clientEmails,omitempty" form:"clientEmails" gorm:"serializer:json"`
+	PrimaryInboundId  int      `json:"primaryInboundId,omitempty" form:"primaryInboundId"`
+	FallbackInboundId int      `json:"fallbackInboundId,omitempty" form:"fallbackInboundId"`
 	// inboundId -> leastLoad weight; absent entries mean 1.0. Only meaningful
 	// with Strategy "leastLoad" — xray ignores costs on every other strategy.
 	MemberWeights map[int]float64 `json:"memberWeights,omitempty" form:"memberWeights" gorm:"serializer:json;column:member_weights"`

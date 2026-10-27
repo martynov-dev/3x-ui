@@ -209,7 +209,7 @@ func (s *SubJsonService) GetJson(subId string, host string, alwaysReturnArray bo
 			}
 		}
 	}
-	entries = s.appendBalancerEntries(entries)
+	entries = s.appendBalancerEntries(entries, seenEmails)
 
 	// Inbounds arrive sorted by (sub_sort_index, id); balancers interleave by
 	// the same key and, on an equal number, follow the inbound group.
@@ -421,7 +421,7 @@ func (s *SubJsonService) balancerObservatory(prefix string) map[string]any {
 
 // appendBalancerEntries appends one entry per enabled balancer that has at
 // least one member outbound among the inbound entries.
-func (s *SubJsonService) appendBalancerEntries(entries []subConfigEntry) []subConfigEntry {
+func (s *SubJsonService) appendBalancerEntries(entries []subConfigEntry, subscriberEmails map[string]struct{}) []subConfigEntry {
 	balancers := getEnabledSubBalancers()
 	if len(balancers) == 0 {
 		return entries
@@ -440,6 +440,21 @@ func (s *SubJsonService) appendBalancerEntries(entries []subConfigEntry) []subCo
 		}
 	}
 	for i := range balancers {
+		b := &balancers[i]
+		if b.Audience != "" && b.Audience != "all" {
+			allowed := false
+			if b.Audience == "selected" {
+				for _, email := range b.ClientEmails {
+					if _, ok := subscriberEmails[email]; ok {
+						allowed = true
+						break
+					}
+				}
+			}
+			if !allowed {
+				continue
+			}
+		}
 		config := s.buildBalancerConfig(&balancers[i], entries, entryProxies)
 		if config == nil {
 			continue
@@ -545,6 +560,12 @@ func (s *SubJsonService) buildBalancerConfig(balancer *model.SubBalancer, entrie
 		for _, outbound := range entryProxies[i] {
 			protocol, _ := outbound["protocol"].(string)
 			base := prefix + balancerMemberSuffix(protocol)
+			if balancer.Strategy == "failover" {
+				base = prefix + "fallback"
+				if entry.id == balancer.PrimaryInboundId {
+					base = prefix + "primary"
+				}
+			}
 			tag := base
 			for suffix := 2; usedTags[tag]; suffix++ {
 				tag = fmt.Sprintf("%s-%d", base, suffix)
@@ -563,6 +584,22 @@ func (s *SubJsonService) buildBalancerConfig(balancer *model.SubBalancer, entrie
 	}
 	if len(proxies) == 0 {
 		return nil
+	}
+	var primaryTags []string
+	var fallbackTag string
+	if balancer.Strategy == "failover" {
+		for _, member := range members {
+			if member.inboundId == balancer.PrimaryInboundId {
+				primaryTags = append(primaryTags, member.tag)
+			}
+			if member.inboundId == balancer.FallbackInboundId && fallbackTag == "" {
+				fallbackTag = member.tag
+			}
+		}
+		// Do not emit a partially authorized or stale failover profile.
+		if len(primaryTags) == 0 || fallbackTag == "" {
+			return nil
+		}
 	}
 
 	outbounds := append([]json_util.RawMessage{}, proxies...)
@@ -592,7 +629,7 @@ func (s *SubJsonService) buildBalancerConfig(balancer *model.SubBalancer, entrie
 		rules = append(rules, ruleMap)
 	}
 	routing["rules"] = rules
-	isObservatory := balancer.Strategy == "leastPing" || balancer.Strategy == "leastLoad"
+	isObservatory := balancer.Strategy == "leastPing" || balancer.Strategy == "leastLoad" || balancer.Strategy == "failover"
 	strategyEntry := map[string]any{"type": balancer.Strategy}
 	if costs := leastLoadCosts(balancer, members); costs != nil {
 		strategyEntry["settings"] = map[string]any{"costs": costs}
@@ -607,6 +644,11 @@ func (s *SubJsonService) buildBalancerConfig(balancer *model.SubBalancer, entrie
 		// failing dispatch.
 		balancerEntry["fallbackTag"] = firstTag
 	}
+	if balancer.Strategy == "failover" {
+		balancerEntry["selector"] = primaryTags
+		balancerEntry["strategy"] = map[string]any{"type": "leastPing"}
+		balancerEntry["fallbackTag"] = fallbackTag
+	}
 	routing["balancers"] = []any{balancerEntry}
 
 	newConfigJson := make(map[string]any, len(template)+2)
@@ -617,7 +659,11 @@ func (s *SubJsonService) buildBalancerConfig(balancer *model.SubBalancer, entrie
 	// leastPing/leastLoad require a burst observatory (Xray refuses to start
 	// them without one); fallbackTag above covers the probe-outage case.
 	if isObservatory {
-		newConfigJson["burstObservatory"] = s.balancerObservatory(prefix)
+		obs := s.balancerObservatory(prefix)
+		if balancer.Strategy == "failover" {
+			obs["subjectSelector"] = primaryTags
+		}
+		newConfigJson["burstObservatory"] = obs
 	}
 
 	config, _ := json.MarshalIndent(newConfigJson, "", "  ")

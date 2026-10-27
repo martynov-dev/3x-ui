@@ -24,6 +24,19 @@ func setupSubBalancerRouter(t *testing.T) *gin.Engine {
 	return router
 }
 
+func TestSubBalancerControllerFailoverAudience(t *testing.T) {
+	router := setupSubBalancerRouter(t)
+	resp := subBalancerPost(t, router, "/panel/api/sub-balancers", "remark=test&strategy=failover&inboundIds=1&inboundIds=2&primaryInboundId=2&fallbackInboundId=1&audience=selected&clientEmails=tester&clientEmails=second")
+	obj := responseObj(t, resp.Body.String())
+	if obj["success"] != true {
+		t.Fatalf("create: %s", resp.Body.String())
+	}
+	bal := obj["obj"].(map[string]any)
+	if bal["audience"] != "selected" || bal["primaryInboundId"] != float64(2) || bal["fallbackInboundId"] != float64(1) || len(bal["clientEmails"].([]any)) != 2 {
+		t.Fatalf("fields lost: %s", resp.Body.String())
+	}
+}
+
 func subBalancerPost(t *testing.T, router *gin.Engine, path, body string) *httptest.ResponseRecorder {
 	t.Helper()
 	req := httptest.NewRequest(http.MethodPost, path, strings.NewReader(body))
