@@ -1476,6 +1476,8 @@ type SubBalancer struct {
 	ClientEmails      []string `json:"clientEmails,omitempty" form:"clientEmails" gorm:"serializer:json"`
 	PrimaryInboundId  int      `json:"primaryInboundId,omitempty" form:"primaryInboundId"`
 	FallbackInboundId int      `json:"fallbackInboundId,omitempty" form:"fallbackInboundId"`
+	HiddenMemberIds   []int    `json:"hiddenMemberIds,omitempty" form:"hiddenMemberIds" gorm:"serializer:json"`
+	AutoJson          bool     `json:"autoJson,omitempty" form:"autoJson"`
 	// inboundId -> leastLoad weight; absent entries mean 1.0. Only meaningful
 	// with Strategy "leastLoad" — xray ignores costs on every other strategy.
 	MemberWeights map[int]float64 `json:"memberWeights,omitempty" form:"memberWeights" gorm:"serializer:json;column:member_weights"`

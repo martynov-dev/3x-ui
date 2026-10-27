@@ -116,6 +116,12 @@ func (s *SubJsonService) bakedTemplate() map[string]any {
 
 // GetJson generates a JSON subscription configuration for the given subscription ID and host.
 func (s *SubJsonService) GetJson(subId string, host string, alwaysReturnArray bool) (string, string, error) {
+	return s.getJson(subId, host, alwaysReturnArray, false)
+}
+
+// automaticOnly negotiates JSON only when an eligible balancer was built.
+// Explicit JSON URLs keep their existing behavior through GetJson.
+func (s *SubJsonService) getJson(subId string, host string, alwaysReturnArray, automaticOnly bool) (string, string, error) {
 	subReq := s.SubService.ForRequest(host)
 	subReq.subscriptionBody = true
 	inbounds, err := subReq.getInboundsBySubId(subId)
@@ -209,7 +215,10 @@ func (s *SubJsonService) GetJson(subId string, host string, alwaysReturnArray bo
 			}
 		}
 	}
-	entries = s.appendBalancerEntries(entries, seenEmails)
+	entries, automatic := s.appendBalancerEntries(entries, seenEmails)
+	if automaticOnly && !automatic {
+		return "", "", nil
+	}
 
 	// Inbounds arrive sorted by (sub_sort_index, id); balancers interleave by
 	// the same key and, on an equal number, follow the inbound group.
@@ -421,10 +430,10 @@ func (s *SubJsonService) balancerObservatory(prefix string) map[string]any {
 
 // appendBalancerEntries appends one entry per enabled balancer that has at
 // least one member outbound among the inbound entries.
-func (s *SubJsonService) appendBalancerEntries(entries []subConfigEntry, subscriberEmails map[string]struct{}) []subConfigEntry {
+func (s *SubJsonService) appendBalancerEntries(entries []subConfigEntry, subscriberEmails map[string]struct{}) ([]subConfigEntry, bool) {
 	balancers := getEnabledSubBalancers()
 	if len(balancers) == 0 {
-		return entries
+		return entries, false
 	}
 	// Pre-pass: pull each inbound doc's proxy outbound once so every balancer
 	// reuses it instead of re-unmarshalling the whole document per balancer.
@@ -439,6 +448,8 @@ func (s *SubJsonService) appendBalancerEntries(entries []subConfigEntry, subscri
 			}
 		}
 	}
+	hiddenMembers := make(map[int]struct{})
+	automatic := false
 	for i := range balancers {
 		b := &balancers[i]
 		if b.Audience != "" && b.Audience != "all" {
@@ -459,6 +470,12 @@ func (s *SubJsonService) appendBalancerEntries(entries []subConfigEntry, subscri
 		if config == nil {
 			continue
 		}
+		automatic = automatic || b.AutoJson
+		for _, id := range b.HiddenMemberIds {
+			if slices.Contains(b.InboundIds, id) {
+				hiddenMembers[id] = struct{}{}
+			}
+		}
 		entries = append(entries, subConfigEntry{
 			sortIndex: balancers[i].SortOrder,
 			kind:      1,
@@ -466,7 +483,15 @@ func (s *SubJsonService) appendBalancerEntries(entries []subConfigEntry, subscri
 			configs:   []json_util.RawMessage{config},
 		})
 	}
-	return entries
+	// Filter only after building all balancers so shared members remain available.
+	visible := entries[:0]
+	for _, entry := range entries {
+		if _, hidden := hiddenMembers[entry.id]; hidden && entry.kind == 0 {
+			continue
+		}
+		visible = append(visible, entry)
+	}
+	return visible, automatic
 }
 
 // extractProxyOutbound returns the first outbound of a document when it is the

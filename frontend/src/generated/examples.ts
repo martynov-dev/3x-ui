@@ -1185,12 +1185,16 @@ export const EXAMPLES: Record<string, unknown> = {
   },
   "SubBalancer": {
     "audience": "",
+    "autoJson": false,
     "clientEmails": [
       ""
     ],
     "createdAt": 1710000000000,
     "enabled": true,
     "fallbackInboundId": 0,
+    "hiddenMemberIds": [
+      0
+    ],
     "id": 1,
     "inboundIds": [
       1,

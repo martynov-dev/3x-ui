@@ -12,6 +12,128 @@ import (
 	"github.com/mhsanaei/3x-ui/v3/internal/web/service"
 )
 
+func TestSubJson_BalancerAutomaticDelivery(t *testing.T) {
+	for _, scenario := range []string{"selected", "other subscriber", "disabled", "manual", "missing primary", "unsupported app", "global legacy"} {
+		t.Run(scenario, func(t *testing.T) {
+			seedSubDB(t)
+			a := seedSubInbound(t, "selected", "a", 4921, 1, wsTLSStream)
+			b := seedSubInbound(t, "selected", "b", 4922, 2, wsTLSStream)
+			seedSubInbound(t, "other", "other", 4923, 3, wsTLSStream)
+			bal := &model.SubBalancer{
+				Remark: "auto", Strategy: "failover", InboundIds: []int{a.Id, b.Id},
+				PrimaryInboundId: a.Id, FallbackInboundId: b.Id, Enabled: true,
+				Audience: "selected", ClientEmails: []string{"a@e"}, AutoJson: true,
+				HiddenMemberIds: []int{b.Id}, SortOrder: 1,
+			}
+			config := subscriptionTestRouterConfig{jsonUserAgentRegex: "(?i)incy"}
+			subID, ua, wantJSON := "selected", "Incy/2.6.5", true
+			switch scenario {
+			case "other subscriber":
+				subID, wantJSON = "other", false
+			case "disabled":
+				bal.Enabled, wantJSON = false, false
+			case "manual":
+				bal.AutoJson, wantJSON = false, false
+			case "missing primary":
+				if err := database.GetDB().Model(a).Update("enable", false).Error; err != nil {
+					t.Fatal(err)
+				}
+				wantJSON = false
+			case "unsupported app":
+				ua, wantJSON = "OtherVPN/1.0", false
+			case "global legacy":
+				config.jsonAutoDetect, subID = true, "other"
+			}
+			seedSubBalancer(t, bal)
+			router := newSubscriptionTestRouter(config)
+			req := httptest.NewRequest(http.MethodGet, "/sub/"+subID, nil)
+			req.Header.Set("User-Agent", ua)
+			resp := httptest.NewRecorder()
+			router.ServeHTTP(resp, req)
+			if resp.Code != http.StatusOK {
+				t.Fatalf("HTTP %d: %s", resp.Code, resp.Body.String())
+			}
+			if got := strings.Contains(resp.Header().Get("Content-Type"), "application/json"); got != wantJSON {
+				t.Fatalf("JSON=%v, want %v: %s", got, wantJSON, resp.Body.String())
+			}
+			if scenario == "selected" {
+				docs := parseSubJsonDocs(t, resp.Body.String())
+				if len(docs) != 2 || findDocByRemarks(docs, "auto") == nil {
+					t.Fatalf("incorrect negotiated profiles: %s", resp.Body.String())
+				}
+			}
+		})
+	}
+}
+
+func TestSubJson_BalancerHiddenMembers(t *testing.T) {
+	for _, scenario := range []string{"default", "hide fallback", "hide both", "disabled", "other audience", "missing primary", "shared members"} {
+		t.Run(scenario, func(t *testing.T) {
+			seedSubDB(t)
+			a := seedSubInbound(t, "s1", "a", 4911, 1, wsTLSStream)
+			b := seedSubInbound(t, "s1", "b", 4912, 2, wsTLSStream)
+			bal := &model.SubBalancer{
+				Remark: "auto", Strategy: "failover", InboundIds: []int{a.Id, b.Id},
+				PrimaryInboundId: a.Id, FallbackInboundId: b.Id, Enabled: true,
+				HiddenMemberIds: []int{b.Id}, SortOrder: 1,
+			}
+			wantDocs, wantBalancer := 2, true
+			switch scenario {
+			case "default":
+				bal.HiddenMemberIds, wantDocs = nil, 3
+			case "hide both":
+				bal.HiddenMemberIds, wantDocs = []int{a.Id, b.Id}, 1
+			case "disabled":
+				bal.Enabled, wantBalancer = false, false
+			case "other audience":
+				bal.Audience, bal.ClientEmails, wantBalancer = "selected", []string{"someone else"}, false
+			case "missing primary":
+				if err := database.GetDB().Model(a).Update("enable", false).Error; err != nil {
+					t.Fatal(err)
+				}
+				wantDocs, wantBalancer = 1, false
+			case "shared members":
+				seedSubBalancer(t, &model.SubBalancer{Remark: "second", Strategy: "random", InboundIds: []int{a.Id, b.Id}, Enabled: true, SortOrder: 2})
+				wantDocs = 3
+			}
+			seedSubBalancer(t, bal)
+			js := NewSubJsonService("", "", "", "", NewSubService(""))
+			out, _, err := js.GetJson("s1", "req.example.com", true)
+			if err != nil {
+				t.Fatal(err)
+			}
+			docs := parseSubJsonDocs(t, out)
+			if len(docs) != wantDocs {
+				t.Fatalf("got %d docs, want %d: %s", len(docs), wantDocs, out)
+			}
+			doc := findDocByRemarks(docs, "auto")
+			if (doc != nil) != wantBalancer {
+				t.Fatalf("unexpected balancer presence: %s", out)
+			}
+			if doc != nil && len(docOutboundTags(doc)) != 4 {
+				t.Fatalf("balancer lost members: %s", out)
+			}
+			if scenario == "shared members" {
+				second := findDocByRemarks(docs, "second")
+				if second == nil || len(docOutboundTags(second)) != 4 {
+					t.Fatalf("shared balancer lost members: %s", out)
+				}
+			}
+			raw, _, _, _, err := NewSubService("").GetSubs("s1", "req.example.com")
+			if err != nil {
+				t.Fatal(err)
+			}
+			wantRaw := 2
+			if scenario == "missing primary" {
+				wantRaw = 1
+			}
+			if len(raw) != wantRaw {
+				t.Fatalf("plain subscription changed: %v", raw)
+			}
+		})
+	}
+}
+
 func seedSubBalancer(t *testing.T, b *model.SubBalancer) *model.SubBalancer {
 	t.Helper()
 	if err := database.GetDB().Create(b).Error; err != nil {

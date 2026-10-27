@@ -1161,10 +1161,12 @@ export type Setting = z.infer<typeof SettingSchema>;
 
 export const SubBalancerSchema = z.object({
   audience: z.string().optional(),
+  autoJson: z.boolean().optional(),
   clientEmails: z.array(z.string()).optional(),
   createdAt: z.number().int(),
   enabled: z.boolean(),
   fallbackInboundId: z.number().int().optional(),
+  hiddenMemberIds: z.array(z.number().int()).optional(),
   id: z.number().int(),
   inboundIds: z.array(z.number().int()),
   memberWeights: z.record(z.number().int(), z.number()).optional(),

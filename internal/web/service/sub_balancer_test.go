@@ -218,6 +218,36 @@ func TestSubBalancerServiceValidation(t *testing.T) {
 
 // Weights are a leastLoad-only knob (xray ignores costs elsewhere); non-positive
 // weights are rejected rather than defaulted — a zero means "never pick this".
+func TestSubBalancerServiceHiddenMembers(t *testing.T) {
+	setupSubBalancerDB(t)
+	svc := &SubBalancerService{}
+	if _, err := svc.Create(&model.SubBalancer{Remark: "bad", InboundIds: []int{1}, HiddenMemberIds: []int{2}}); err == nil {
+		t.Fatal("accepted a hidden nonmember")
+	}
+	b, err := svc.Create(&model.SubBalancer{Remark: "test", InboundIds: []int{1, 2}, HiddenMemberIds: []int{2, 2}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	stored, err := svc.Get(b.Id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(stored.HiddenMemberIds) != 1 || stored.HiddenMemberIds[0] != 2 {
+		t.Fatalf("hidden members not persisted/deduplicated: %v", stored.HiddenMemberIds)
+	}
+	stored.HiddenMemberIds = nil
+	if _, err := svc.Update(b.Id, stored, nil); err != nil {
+		t.Fatal(err)
+	}
+	stored, err = svc.Get(b.Id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(stored.HiddenMemberIds) != 0 {
+		t.Fatalf("hidden members not cleared: %v", stored.HiddenMemberIds)
+	}
+}
+
 func TestSubBalancerServiceWeightValidation(t *testing.T) {
 	setupSubBalancerDB(t)
 	svc := &SubBalancerService{}

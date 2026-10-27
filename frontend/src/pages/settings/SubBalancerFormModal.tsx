@@ -48,6 +48,8 @@ function initialState(balancer: SubBalancer | null): SubBalancerFormValues {
     clientEmails: balancer?.clientEmails ?? [],
     primaryInboundId: balancer?.primaryInboundId || undefined,
     fallbackInboundId: balancer?.fallbackInboundId || undefined,
+    hiddenMemberIds: balancer?.hiddenMemberIds ?? undefined,
+    autoJson: balancer?.autoJson ?? undefined,
   };
 }
 
@@ -111,6 +113,11 @@ export default function SubBalancerFormModal({
       delete candidate.memberWeights;
     }
     if (candidate.audience !== 'selected') candidate.clientEmails = [];
+    if (candidate.hiddenMemberIds) {
+      candidate.hiddenMemberIds = candidate.hiddenMemberIds.filter((id) =>
+        candidate.inboundIds.includes(id),
+      );
+    }
     if (candidate.strategy !== 'failover') {
       delete candidate.primaryInboundId;
       delete candidate.fallbackInboundId;
@@ -190,6 +197,18 @@ export default function SubBalancerFormModal({
             value={inboundIds || []}
             onChange={(v) => methods.setValue('inboundIds', v, { shouldDirty: true })}
           />
+
+          <FormField
+            label={t('pages.settings.subBalancers.hiddenMembers')}
+            name="hiddenMemberIds"
+            tooltip={t('pages.settings.subBalancers.hiddenMembersHelp')}
+          >
+            <Select
+              mode="multiple"
+              allowClear
+              options={inboundOptions.filter((option) => inboundIds?.includes(option.value))}
+            />
+          </FormField>
 
           {strategy === 'failover' && (
             <>
@@ -297,6 +316,15 @@ export default function SubBalancerFormModal({
               </span>
             </Form.Item>
           )}
+
+          <FormField
+            label={t('pages.settings.subBalancers.autoJson')}
+            name="autoJson"
+            valueProp="checked"
+            extra={t('pages.settings.subBalancers.autoJsonHelp')}
+          >
+            <Switch />
+          </FormField>
 
           <FormField
             label={t('pages.settings.subBalancers.enabled')}

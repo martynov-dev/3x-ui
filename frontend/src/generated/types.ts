@@ -1090,10 +1090,12 @@ export interface Setting {
 
 export interface SubBalancer {
   audience?: string;
+  autoJson?: boolean;
   clientEmails?: string[];
   createdAt: number;
   enabled: boolean;
   fallbackInboundId?: number;
+  hiddenMemberIds?: number[];
   id: number;
   inboundIds: number[];
   memberWeights?: Record<number, number>;

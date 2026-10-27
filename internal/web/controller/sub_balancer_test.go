@@ -26,12 +26,18 @@ func setupSubBalancerRouter(t *testing.T) *gin.Engine {
 
 func TestSubBalancerControllerFailoverAudience(t *testing.T) {
 	router := setupSubBalancerRouter(t)
-	resp := subBalancerPost(t, router, "/panel/api/sub-balancers", "remark=test&strategy=failover&inboundIds=1&inboundIds=2&primaryInboundId=2&fallbackInboundId=1&audience=selected&clientEmails=tester&clientEmails=second")
+	resp := subBalancerPost(t, router, "/panel/api/sub-balancers", "remark=test&strategy=failover&inboundIds=1&inboundIds=2&primaryInboundId=2&fallbackInboundId=1&audience=selected&clientEmails=tester&clientEmails=second&hiddenMemberIds=1&hiddenMemberIds=2&autoJson=true")
 	obj := responseObj(t, resp.Body.String())
 	if obj["success"] != true {
 		t.Fatalf("create: %s", resp.Body.String())
 	}
 	bal := obj["obj"].(map[string]any)
+	if bal["autoJson"] != true {
+		t.Fatalf("autoJson lost: %s", resp.Body.String())
+	}
+	if len(bal["hiddenMemberIds"].([]any)) != 2 {
+		t.Fatalf("hidden members lost: %s", resp.Body.String())
+	}
 	if bal["audience"] != "selected" || bal["primaryInboundId"] != float64(2) || bal["fallbackInboundId"] != float64(1) || len(bal["clientEmails"].([]any)) != 2 {
 		t.Fatalf("fields lost: %s", resp.Body.String())
 	}

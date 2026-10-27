@@ -37,6 +37,7 @@ func parseSubBalancerForm(c *gin.Context) (*model.SubBalancer, *bool, error) {
 		Strategy          string `form:"strategy"`
 		SortOrder         int    `form:"sortOrder"`
 		Audience          string `form:"audience"`
+		AutoJson          bool   `form:"autoJson"`
 		PrimaryInboundId  int    `form:"primaryInboundId"`
 		FallbackInboundId int    `form:"fallbackInboundId"`
 	}{}
@@ -56,6 +57,7 @@ func parseSubBalancerForm(c *gin.Context) (*model.SubBalancer, *bool, error) {
 		Strategy:          form.Strategy,
 		SortOrder:         form.SortOrder,
 		Audience:          form.Audience,
+		AutoJson:          form.AutoJson,
 		ClientEmails:      c.PostFormArray("clientEmails"),
 		PrimaryInboundId:  form.PrimaryInboundId,
 		FallbackInboundId: form.FallbackInboundId,
@@ -66,6 +68,13 @@ func parseSubBalancerForm(c *gin.Context) (*model.SubBalancer, *bool, error) {
 			return nil, nil, fmt.Errorf("invalid inbound id %q: %w", raw, err)
 		}
 		balancer.InboundIds = append(balancer.InboundIds, id)
+	}
+	for _, raw := range c.PostFormArray("hiddenMemberIds") {
+		id, err := strconv.Atoi(raw)
+		if err != nil {
+			return nil, nil, fmt.Errorf("invalid hidden member id %q: %w", raw, err)
+		}
+		balancer.HiddenMemberIds = append(balancer.HiddenMemberIds, id)
 	}
 	// Weights arrive as one JSON object ("memberWeights":{"3":0.5}); gin cannot
 	// bind bracket-keyed maps from urlencoded forms, unlike repeated scalars.

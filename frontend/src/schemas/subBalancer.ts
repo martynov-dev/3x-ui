@@ -18,6 +18,8 @@ export const SubBalancerSchema = z.object({
   clientEmails: z.array(z.string()).nullish(),
   primaryInboundId: z.number().optional(),
   fallbackInboundId: z.number().optional(),
+  hiddenMemberIds: z.array(z.number()).nullish(),
+  autoJson: z.boolean().optional(),
   memberWeights: z.record(z.string(), z.number()).nullish(),
   sortOrder: z.number(),
   enabled: z.boolean(),
@@ -57,8 +59,17 @@ export const SubBalancerFormSchema = z
     clientEmails: z.array(z.string().trim().min(1)).optional(),
     primaryInboundId: z.number().int().positive().optional(),
     fallbackInboundId: z.number().int().positive().optional(),
+    hiddenMemberIds: z.array(z.number().int().positive()).optional(),
+    autoJson: z.boolean().optional(),
   })
   .superRefine((value, ctx) => {
+    if (value.hiddenMemberIds?.some((id) => !value.inboundIds.includes(id))) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['hiddenMemberIds'],
+        message: 'pages.settings.subBalancers.errHiddenMembers',
+      });
+    }
     if (value.audience === 'selected' && !value.clientEmails?.length) {
       ctx.addIssue({
         code: 'custom',

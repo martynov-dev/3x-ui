@@ -4760,6 +4760,9 @@ export const SCHEMAS: Record<string, unknown> = {
         "description": "Empty Audience preserves legacy balancers shared with all subscribers.",
         "type": "string"
       },
+      "autoJson": {
+        "type": "boolean"
+      },
       "clientEmails": {
         "items": {
           "type": "string"
@@ -4778,6 +4781,12 @@ export const SCHEMAS: Record<string, unknown> = {
       },
       "fallbackInboundId": {
         "type": "integer"
+      },
+      "hiddenMemberIds": {
+        "items": {
+          "type": "integer"
+        },
+        "type": "array"
       },
       "id": {
         "example": 1,

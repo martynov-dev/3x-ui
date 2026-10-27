@@ -106,7 +106,7 @@ describe('SubBalancerFormModal', () => {
     const { onConfirm } = renderModal(null);
     fireEvent.change(remarkInput(), { target: { value: 'private' } });
     selectInbound('First');
-    expect(document.querySelectorAll('.ant-select-multiple')).toHaveLength(2);
+    expect(document.querySelectorAll('.ant-select-multiple')).toHaveLength(3);
     fireEvent.click(primaryButton());
     await waitFor(() => expect(document.body.textContent).toContain('Select at least one client'));
     expect(onConfirm).not.toHaveBeenCalled();
@@ -122,6 +122,8 @@ describe('SubBalancerFormModal', () => {
       clientEmails: ['tester'],
       primaryInboundId: 2,
       fallbackInboundId: 1,
+      hiddenMemberIds: [1],
+      autoJson: true,
       sortOrder: 1,
       enabled: true,
     });
@@ -134,9 +136,23 @@ describe('SubBalancerFormModal', () => {
           clientEmails: ['tester'],
           primaryInboundId: 2,
           fallbackInboundId: 1,
+          hiddenMemberIds: [1],
+          autoJson: true,
         }),
       ),
     );
+  });
+
+  it('rejects hidden nonmembers in the form contract', () => {
+    const base = {
+      remark: 'test',
+      strategy: 'random',
+      inboundIds: [1, 2],
+      sortOrder: 1,
+      enabled: true,
+    };
+    expect(SubBalancerFormSchema.safeParse({ ...base, hiddenMemberIds: [2] }).success).toBe(true);
+    expect(SubBalancerFormSchema.safeParse({ ...base, hiddenMemberIds: [3] }).success).toBe(false);
   });
 
   it('rejects identical primary/fallback and non-member primary in the form contract', () => {

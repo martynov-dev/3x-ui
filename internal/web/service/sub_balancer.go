@@ -42,6 +42,16 @@ func (s *SubBalancerService) validate(b *model.SubBalancer) error {
 	if b.Audience != "" && b.Audience != "all" && b.Audience != "selected" {
 		return common.NewError("invalid balancer audience")
 	}
+	var hidden []int
+	for _, id := range b.HiddenMemberIds {
+		if !slices.Contains(b.InboundIds, id) {
+			return common.NewError("hidden member must belong to the balancer")
+		}
+		if !slices.Contains(hidden, id) {
+			hidden = append(hidden, id)
+		}
+	}
+	b.HiddenMemberIds = hidden
 	if b.Audience == "selected" {
 		var emails []string
 		for _, email := range b.ClientEmails {
@@ -151,6 +161,8 @@ func (s *SubBalancerService) Update(id int, balancer *model.SubBalancer, enabled
 	current.ClientEmails = balancer.ClientEmails
 	current.PrimaryInboundId = balancer.PrimaryInboundId
 	current.FallbackInboundId = balancer.FallbackInboundId
+	current.HiddenMemberIds = balancer.HiddenMemberIds
+	current.AutoJson = balancer.AutoJson
 	current.SortOrder = balancer.SortOrder
 	if enabled != nil {
 		current.Enabled = *enabled

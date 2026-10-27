@@ -190,6 +190,20 @@ const subBalancerBodyParams: EndpointParam[] = [
     desc: 'failover only: the other selected inbound. Used while the primary is unavailable. Both endpoints must be available to the subscriber.',
   },
   {
+    name: 'hiddenMemberIds',
+    in: 'body (form)',
+    type: 'integer[]',
+    optional: true,
+    desc: 'Repeated member inbound IDs to hide as standalone JSON profiles, only after this balancer is generated for its recipient. Members remain inside all balancers. Does not change access or plain subscriptions. Omitted or empty clears the selection.',
+  },
+  {
+    name: 'autoJson',
+    in: 'body (form)',
+    type: 'boolean',
+    optional: true,
+    desc: 'When this balancer is successfully generated for an eligible subscriber, negotiate JSON on their standard URL for apps matching the JSON User-Agent pattern. Requires JSON subscriptions enabled, but not global JSON auto-detection. Defaults to false.',
+  },
+  {
     name: 'memberWeights',
     in: 'body (form)',
     type: 'object',

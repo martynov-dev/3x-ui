@@ -96,6 +96,8 @@ export default function SubscriptionBalancersTab({
       clientEmails: balancer.clientEmails ?? [],
       primaryInboundId: balancer.primaryInboundId || undefined,
       fallbackInboundId: balancer.fallbackInboundId || undefined,
+      hiddenMemberIds: balancer.hiddenMemberIds ?? undefined,
+      autoJson: balancer.autoJson ?? undefined,
       sortOrder: balancer.sortOrder,
       enabled: !balancer.enabled,
     });

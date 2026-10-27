@@ -492,7 +492,9 @@ func (a *SUBController) subs(c *gin.Context) {
 		logSubscriptionRoute(userAgent, "clash")
 		return
 	}
-	if shouldAutoServeJson(a.jsonAutoDetect, a.jsonEnabled, false, userAgent, a.jsonUserAgent) && a.serveJsonBody(c, true, "application/json; charset=utf-8", false) {
+	// Global auto-detection preserves its legacy scope. Otherwise negotiate
+	// JSON only if an opted-in balancer is actually generated for this identity.
+	if shouldAutoServeJson(true, a.jsonEnabled, false, userAgent, a.jsonUserAgent) && a.serveJsonBodyForRequest(c, true, "application/json; charset=utf-8", false, !a.jsonAutoDetect) {
 		a.recordSubscriptionFetch(c)
 		logSubscriptionRoute(userAgent, "json")
 		return
@@ -840,9 +842,13 @@ func (a *SUBController) serveJson(c *gin.Context, alwaysReturnArray bool, conten
 }
 
 func (a *SUBController) serveJsonBody(c *gin.Context, alwaysReturnArray bool, contentType string, rawDownload bool) bool {
+	return a.serveJsonBodyForRequest(c, alwaysReturnArray, contentType, rawDownload, false)
+}
+
+func (a *SUBController) serveJsonBodyForRequest(c *gin.Context, alwaysReturnArray bool, contentType string, rawDownload, automaticOnly bool) bool {
 	subId := c.Param("subid")
 	scheme, host, hostWithPort, _ := a.subService.ResolveRequest(c)
-	jsonSub, header, err := a.subJsonService.GetJson(subId, host, alwaysReturnArray)
+	jsonSub, header, err := a.subJsonService.getJson(subId, host, alwaysReturnArray, automaticOnly)
 	if err != nil {
 		writeSubError(c, err)
 		return true
