@@ -12,6 +12,7 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/mhsanaei/3x-ui/v3/internal/config"
 )
@@ -149,5 +150,71 @@ func TestFullBackupRejectsUnsafeDestination(t *testing.T) {
 		if err := validateFullBackupSettings(bad); err == nil {
 			t.Fatalf("accepted invalid settings: %+v", bad)
 		}
+	}
+}
+
+func TestFullBackupReadableNameAndDelete(t *testing.T) {
+	t.Setenv("XUI_DB_FOLDER", t.TempDir())
+	if err := os.MkdirAll(fullBackupDir(), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	now := time.Date(2026, 11, 10, 18, 24, 35, 123000000, time.FixedZone("MSK", 3*3600))
+	name := fullBackupName("panel.example.com", now)
+	if name != "full-panel.example.com_2026-11-10_18-24-35.123_UTC+0300.tar.gz" || !isFullBackupName(name) {
+		t.Fatalf("unexpected name: %s", name)
+	}
+	for _, host := range []string{"", "_", "_panel.example.com", strings.Repeat("x", 200), "../bad/host"} {
+		if name := fullBackupName(host, now); !isFullBackupName(name) {
+			t.Fatalf("generated unsupported filename for %q: %s", host, name)
+		}
+	}
+	for _, name := range []string{name, "full-2026-11-09_135622.314332519.tar.gz"} {
+		path := filepath.Join(fullBackupDir(), name)
+		if err := os.WriteFile(path, []byte("archive"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		fullBackupMu.Lock()
+		err := DeleteFullBackup(name)
+		fullBackupMu.Unlock()
+		if err == nil {
+			t.Fatal("deleted archive during backup")
+		}
+		if err := DeleteFullBackup(name); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := os.Stat(path); !os.IsNotExist(err) {
+			t.Fatal("archive still exists", err)
+		}
+	}
+	for _, name := range []string{"../x-ui.db", "x-ui.db", name + ".partial"} {
+		if err := DeleteFullBackup(name); err == nil {
+			t.Fatalf("accepted unsafe delete: %s", name)
+		}
+	}
+}
+
+func TestFullBackupRetentionUsesTimeAcrossDomainsAndLegacyNames(t *testing.T) {
+	t.Setenv("XUI_DB_FOLDER", t.TempDir())
+	if err := os.MkdirAll(fullBackupDir(), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	names := []string{"full-2026-11-09_135622.314332519.tar.gz",
+		fullBackupName("z.example.com", time.Now()), fullBackupName("a.example.com", time.Now())}
+	for i, name := range names {
+		path := filepath.Join(fullBackupDir(), name)
+		if err := os.WriteFile(path, nil, 0o600); err != nil {
+			t.Fatal(err)
+		}
+		stamp := time.Unix(int64(i+1), 0)
+		if err := os.Chtimes(path, stamp, stamp); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := pruneFullBackups(1); err != nil {
+		t.Fatal(err)
+	}
+	files, err := ListFullBackups()
+	if err != nil || len(files) != 1 || files[0].Name != names[2] {
+		t.Fatalf("incorrect retention: %v %v", files, err)
 	}
 }

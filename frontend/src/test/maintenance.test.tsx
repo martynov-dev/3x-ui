@@ -46,6 +46,33 @@ function showPage() {
 afterEach(() => vi.restoreAllMocks());
 
 describe('maintenance', () => {
+  it('confirms deletion of a local archive and refreshes the list', async () => {
+    const name = 'full-panel.example.com_2026-11-10_18-24-35.123_UTC+0300.tar.gz';
+    const get = vi.spyOn(HttpUtil, 'get').mockResolvedValue(
+      new Msg(true, '', {
+        ...backupData,
+        files: [{ name, size: 1024, modified: '2026-11-10T15:24:35Z' }],
+      }),
+    );
+    const remove = vi.spyOn(HttpUtil, 'delete').mockResolvedValue(new Msg(true));
+    showPage();
+    expect(await screen.findByRole('link', { name })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
+    expect(remove).not.toHaveBeenCalled();
+    const dialog = await screen.findByText(/Delete this archive from the panel server/);
+    expect(dialog).toBeTruthy();
+    get.mockResolvedValue(new Msg(true, '', backupData));
+    const buttons = screen.getAllByRole('button', { name: 'Delete' });
+    fireEvent.click(buttons[buttons.length - 1]);
+    await waitFor(() =>
+      expect(remove).toHaveBeenCalledWith(
+        `/panel/api/maintenance/backups/${encodeURIComponent(name)}`,
+        { silent: true },
+      ),
+    );
+    await waitFor(() => expect(screen.queryByRole('link', { name })).toBeNull());
+  });
+
   it('saves complete local settings while advanced fields are collapsed', async () => {
     vi.spyOn(HttpUtil, 'get').mockResolvedValue(new Msg(true, '', backupData));
     const post = vi.spyOn(HttpUtil, 'post').mockResolvedValue(new Msg(true));

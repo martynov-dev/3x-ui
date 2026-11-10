@@ -16,6 +16,7 @@ import {
   Input,
   InputNumber,
   Layout,
+  Popconfirm,
   Select,
   Space,
   Spin,
@@ -211,6 +212,15 @@ function BackupsTab() {
     mutationFn: (value: FullBackupSettings) => save(`${endpoint}/backups/settings`, value),
     onSuccess: () => client.invalidateQueries({ queryKey: backupQueryKey }),
   });
+  const remove = useMutation({
+    mutationFn: async (name: string) => {
+      const msg = await HttpUtil.delete(`${endpoint}/backups/${encodeURIComponent(name)}`, {
+        silent: true,
+      });
+      if (!msg.success) throw new Error(msg.msg);
+    },
+    onSuccess: () => client.invalidateQueries({ queryKey: backupQueryKey }),
+  });
   if (query.error) return <Alert type="error" title={query.error.message} />;
   if (!query.data) return <Spin />;
   const { settings, status, files } = query.data;
@@ -232,6 +242,7 @@ function BackupsTab() {
             : '—'}
         </Typography.Paragraph>
         {run.isSuccess && <Alert type="success" showIcon title={t('maintenance.completed')} />}
+        {remove.error && <Alert type="error" showIcon title={remove.error.message} />}
         {(run.error || status.error) && (
           <Alert
             type="error"
@@ -264,9 +275,31 @@ function BackupsTab() {
               ),
             },
             {
+              title: t('maintenance.created'),
+              dataIndex: 'modified',
+              render: (value: string) => new Date(value).toLocaleString(),
+            },
+            {
               title: t('maintenance.size'),
               dataIndex: 'size',
               render: (size: number) => `${(size / 1024 / 1024).toFixed(1)} MB`,
+            },
+            {
+              title: t('delete'),
+              dataIndex: 'name',
+              render: (name: string) => (
+                <Popconfirm
+                  title={t('maintenance.deleteConfirm')}
+                  description={name}
+                  okText={t('delete')}
+                  cancelText={t('cancel')}
+                  onConfirm={() => remove.mutateAsync(name)}
+                >
+                  <Button danger loading={remove.isPending && remove.variables === name}>
+                    {t('delete')}
+                  </Button>
+                </Popconfirm>
+              ),
             },
           ]}
         />

@@ -10,7 +10,8 @@ Restore a trusted full backup on Ubuntu/Debian:
   sudo bash setup.sh --backup /path/full-backup.tar.gz [--check] [--replace]
 --check validates the archive and compatibility without changing services/files.
 --replace explicitly permits replacing an existing installation.
-Use the same distribution version and CPU architecture as the backup server.
+Use the same CPU architecture. Cross-release Ubuntu/Debian restoration requires
+a statically linked panel; nginx packages/modules come from the target OS.
 EOF
 }
 

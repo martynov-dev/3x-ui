@@ -4,6 +4,7 @@ import io
 import json
 import os
 import sqlite3
+import struct
 import tarfile
 import tempfile
 import unittest
@@ -145,8 +146,9 @@ class RestoreBackupTests(unittest.TestCase):
 
     def test_checks_distribution_and_actual_binary_architecture(self):
         binary = self.root / "panel"
-        header = bytearray(20)
+        header = bytearray(64)
         header[:4] = b"\x7fELF"
+        header[4] = 2
         header[5] = 1
         header[18:20] = (62).to_bytes(2, "little")
         binary.write_bytes(header)
@@ -156,12 +158,59 @@ class RestoreBackupTests(unittest.TestCase):
              mock.patch.object(Path, "read_text", return_value=manifest["osRelease"]), \
              mock.patch.object(Path, "is_dir", return_value=True):
             restore.check_platform(manifest, binary)
-            with self.assertRaises(ValueError):
-                restore.check_platform({"osRelease": "ID=debian\nVERSION_ID=12"}, binary)
+            self.assertTrue(restore.check_platform({"osRelease": "ID=ubuntu\nVERSION_ID=26.04"}, binary))
+            self.assertTrue(restore.check_platform({"osRelease": "ID=debian\nVERSION_ID=12"}, binary))
+            with self.assertRaisesRegex(ValueError, "source systems"):
+                restore.check_platform({"osRelease": "ID=alpine\nVERSION_ID=3.22"}, binary)
+            # A PT_INTERP entry denotes a binary tied to system libraries.
+            struct.pack_into("<Q", header, 32, 64)
+            struct.pack_into("<HH", header, 54, 56, 1)
+            program = bytearray(56)
+            struct.pack_into("<I", program, 0, 3)
+            binary.write_bytes(header + program)
+            with self.assertRaisesRegex(ValueError, "statically linked"):
+                restore.check_platform({"osRelease": "ID=ubuntu\nVERSION_ID=26.04"}, binary)
+            # Same-release dynamic binaries retain the existing restore contract.
+            self.assertFalse(restore.check_platform(manifest, binary))
             header[18:20] = (183).to_bytes(2, "little")
             binary.write_bytes(header)
             with self.assertRaises(ValueError):
                 restore.check_platform(manifest, binary)
+
+    def test_rejects_truncated_elf_program_table(self):
+        binary = self.root / "panel"
+        header = bytearray(64)
+        header[:6] = b"\x7fELF\x02\x01"
+        struct.pack_into("<Q", header, 32, 64)
+        struct.pack_into("<HH", header, 54, 56, 1)
+        binary.write_bytes(header)
+        with self.assertRaisesRegex(ValueError, "Truncated ELF program header"):
+            restore.dynamically_linked(binary)
+
+    def test_cross_release_keeps_target_nginx_modules(self):
+        extras = [tarfile.TarInfo(name) for name in (
+            "files/usr/lib/nginx/modules/old-module.so",
+            "files/usr/share/nginx/modules-available/old-module.conf",
+            "files/etc/nginx/modules-enabled/old-module.conf",
+        )]
+        archive_path = self.root / "full.tar.gz"
+        with self.archive(extras) as archive:
+            archive_path.write_bytes(archive.fileobj.fileobj.getvalue())
+        args = type("Args", (), {"backup": str(archive_path), "check": False, "replace": True})()
+        make_temp = tempfile.mkdtemp
+        with mock.patch.object(restore, "check_platform", return_value=True), \
+             mock.patch.object(restore, "run"), \
+             mock.patch.object(restore, "active", return_value=False), \
+             mock.patch.object(restore.os, "geteuid", return_value=0, create=True), \
+             mock.patch.object(restore.subprocess, "run"), \
+             mock.patch.object(restore.tempfile, "mkdtemp", side_effect=lambda *a, **kw: make_temp(dir=self.root)), \
+             mock.patch.object(restore, "apply_files", side_effect=RuntimeError("stop before applying")) as apply:
+            with self.assertRaisesRegex(RuntimeError, "stop before applying"):
+                restore.restore(args)
+        names = {m.name for m in apply.call_args.args[0]}
+        self.assertIn("files/etc/nginx/nginx.conf", names)
+        for member in extras:
+            self.assertNotIn(member.name, names)
 
 
 if __name__ == "__main__":

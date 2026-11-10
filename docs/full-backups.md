@@ -31,7 +31,7 @@ For **Docker panels**, persist the private key and `known_hosts` inside the cont
 
 ## Verify restoration
 
-Use a separate matching Ubuntu/Debian machine to run `setup.sh --backup /path/full-backup.tar.gz --check`, then test actual restoration on a clean machine. Automatic restoration supports this fork's full Linux SQLite backups. PostgreSQL, Docker/Alpine, external firewall rules and DNS need separate handling. See the [README](../README.md) for restoration commands and publication prerequisites.
+Use a separate Ubuntu/Debian machine with the same CPU architecture to run `setup.sh --backup /path/full-backup.tar.gz --check`, then test actual restoration on a clean machine. Cross-release restoration supports static panel binaries and installs nginx packages/modules from the target OS. `--check` does not replace testing service startup on the target OS. Automatic restoration supports this fork's full Linux SQLite backups. PostgreSQL, Docker/Alpine, external firewall rules and DNS need separate handling. See the [README](../README.md) for restoration commands and publication prerequisites.
 
 ### Verified VM scenario
 
@@ -49,3 +49,5 @@ On October 20, 2026, installation and restoration were tested between two separa
 During an update, the existing `update.sh` replaces a very short panel path (such as `/`) with a random path and prints the new URL. Account migration does not guarantee that such a URL remains unchanged.
 
 The unpublished build used a local release archive; only fork file downloads were redirected to a fixture HTTP server. Fetching a published GitHub release was not covered. Debian, other OS versions/architectures, PostgreSQL and live VPN traffic restoration were also outside this run. Logs and the test archive remain locally in `.cache/vm-test/`; the archive contains a test private key.
+
+Delete archives from the panel table with confirmation; only the local copy is removed, while remote SSH copies remain. New filenames contain the panel domain (falling back to subscription domain, then hostname), server date/time and explicit UTC offset. The table displays browser-local time. Legacy names remain supported.

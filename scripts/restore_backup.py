@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Restore trusted full SQLite backups on matching Ubuntu/Debian systemd hosts."""
+"""Restore trusted full SQLite backups on compatible Ubuntu/Debian systemd hosts."""
 
 import argparse
 from contextlib import closing
@@ -10,6 +10,7 @@ import re
 import shlex
 import shutil
 import sqlite3
+import struct
 import subprocess
 import sys
 import tarfile
@@ -117,6 +118,35 @@ def inspect_archive(archive, staging):
     return manifest, members, executable, db_path
 
 
+def dynamically_linked(executable):
+    """Detect PT_INTERP without executing a binary from the backup."""
+    with executable.open("rb") as binary:
+        header = binary.read(64)
+        if len(header) < 52 or header[:4] != b"\x7fELF" or header[4] not in (1, 2) or header[5] not in (1, 2):
+            raise ValueError("Invalid ELF header")
+        endian = "<" if header[5] == 1 else ">"
+        if header[4] == 2:
+            if len(header) < 64:
+                raise ValueError("Truncated ELF header")
+            offset = struct.unpack_from(endian + "Q", header, 32)[0]
+            entry_size, count = struct.unpack_from(endian + "HH", header, 54)
+            minimum = 56
+        else:
+            offset = struct.unpack_from(endian + "I", header, 28)[0]
+            entry_size, count = struct.unpack_from(endian + "HH", header, 42)
+            minimum = 32
+        if count == 65535 or (count and entry_size < minimum):
+            raise ValueError("Unsupported ELF program header table")
+        for index in range(count):
+            binary.seek(offset + index * entry_size)
+            entry = binary.read(entry_size)
+            if len(entry) != entry_size:
+                raise ValueError("Truncated ELF program header")
+            if struct.unpack_from(endian + "I", entry)[0] == 3:
+                return True
+    return False
+
+
 def check_platform(manifest, executable):
     if platform.system() != "Linux":
         raise ValueError("Run restoration on an Ubuntu/Debian Linux server")
@@ -124,8 +154,9 @@ def check_platform(manifest, executable):
     if current.get("ID") not in ("ubuntu", "debian"):
         raise ValueError("Automatic restoration supports Ubuntu/Debian only")
     source = os_release(manifest.get("osRelease", ""))
-    if source and source != current:
-        raise ValueError("Use the same distribution and VERSION_ID as the backup server")
+    cross_release = bool(source and source != current)
+    if source and source.get("ID") not in ("ubuntu", "debian"):
+        raise ValueError("Automatic restoration supports Ubuntu/Debian source systems only")
     # Check the actual ELF binary too, including archives without new metadata.
     with executable.open("rb") as binary:
         header = binary.read(20)
@@ -135,8 +166,14 @@ def check_platform(manifest, executable):
     machine = int.from_bytes(header[18:20], "little" if header[5] == 1 else "big")
     if expected is None or machine != expected:
         raise ValueError("Backup CPU architecture differs from this server")
+    if cross_release and dynamically_linked(executable):
+        raise ValueError("Cross-release restoration requires a statically linked panel; this backup depends on source system libraries")
     if not Path("/run/systemd/system").is_dir():
         raise ValueError("A running systemd host is required; do not run inside a plain Docker container")
+    if cross_release:
+        print("Cross-release restore:", source, "->", current,
+              "(static panel; nginx packages/modules come from the target distribution)")
+    return cross_release
 
 
 def run(*args):
@@ -236,7 +273,14 @@ def restore(args):
         staging = Path(temp)
         with tarfile.open(args.backup, "r:gz") as archive:
             manifest, members, executable, db_path = inspect_archive(archive, staging)
-        check_platform(manifest, staging / ("files" + executable))
+        cross_release = check_platform(manifest, staging / ("files" + executable))
+        if cross_release:
+            # Nginx modules have a distribution-specific ABI. Keep the target
+            # packages' binaries and module configuration, never old .so files.
+            module_paths = ("files/usr/lib/nginx/modules", "files/usr/share/nginx/modules-available",
+                            "files/etc/nginx/modules-enabled")
+            members = [m for m in members if not any(
+                m.name == prefix or m.name.startswith(prefix + "/") for prefix in module_paths)]
         has_nginx = any(m.name.startswith("files/etc/nginx/") for m in members)
         print("Backup version:", manifest["version"])
         print("Panel executable:", executable)
@@ -279,6 +323,8 @@ def restore(args):
                 for parent, directories, files in os.walk("/etc/nginx", followlinks=False):
                     for name in files + [d for d in directories if (Path(parent) / d).is_symlink()]:
                         extra = Path(parent) / name
+                        if cross_release and str(extra).startswith("/etc/nginx/modules-enabled/"):
+                            continue
                         if "files" + str(extra) not in archived:
                             prepare(extra)
                             if extra.exists() or extra.is_symlink():

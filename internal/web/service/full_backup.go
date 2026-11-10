@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -178,7 +179,26 @@ func (s *ServerService) RunFullBackup(ctx context.Context, scheduled bool) (stat
 	if err = os.WriteFile(filepath.Join(staging, dbName), db, 0o600); err != nil {
 		return status, err
 	}
-	name := "full-" + time.Now().UTC().Format("2006-01-02_150405.000000000") + ".tar.gz"
+	all, settingsErr := settings.GetAllSetting()
+	if settingsErr != nil {
+		return status, settingsErr
+	}
+	host := all.WebDomain
+	if host == "" {
+		host = all.SubDomain
+	}
+	if host == "" && all.SubURI != "" {
+		if address, parseErr := url.Parse(all.SubURI); parseErr == nil {
+			host = address.Hostname()
+		}
+	}
+	if host == "" {
+		host, err = os.Hostname()
+		if err != nil {
+			return status, err
+		}
+	}
+	name := fullBackupName(host, time.Now())
 	file, err := os.OpenFile(filepath.Join(fullBackupDir(), name+".partial"), os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o600)
 	if err != nil {
 		return status, err
@@ -193,11 +213,6 @@ func (s *ServerService) RunFullBackup(ctx context.Context, scheduled bool) (stat
 	}
 	paths = append(paths, config.GetEnvFilePaths()...)
 	// Panel certificates may be outside standard nginx/acme directories.
-	all, settingsErr := settings.GetAllSetting()
-	if settingsErr != nil {
-		_ = file.Close()
-		return status, settingsErr
-	}
 	paths = append(paths, all.WebCertFile, all.WebKeyFile, all.SubCertFile, all.SubKeyFile,
 		"/etc/systemd/system/x-ui.service", "/etc/systemd/system/x-ui.service.d",
 		"/usr/lib/systemd/system/x-ui.service", "/etc/init.d/x-ui", "/usr/bin/x-ui",
@@ -435,11 +450,27 @@ func ListFullBackups() ([]FullBackupFile, error) {
 		}
 		files = append(files, FullBackupFile{entry.Name(), info.Size(), info.ModTime()})
 	}
-	slices.SortFunc(files, func(a, b FullBackupFile) int { return strings.Compare(b.Name, a.Name) })
+	slices.SortFunc(files, func(a, b FullBackupFile) int {
+		if order := b.Modified.Compare(a.Modified); order != 0 {
+			return order
+		}
+		return strings.Compare(b.Name, a.Name)
+	})
 	return files, nil
 }
 
-var fullBackupNamePattern = regexp.MustCompile(`^full-\d{4}-\d{2}-\d{2}_\d{6}\.\d{9}\.tar\.gz$`)
+var fullBackupNamePattern = regexp.MustCompile(`^full-(?:\d{4}-\d{2}-\d{2}_\d{6}\.\d{9}|[a-zA-Z0-9][a-zA-Z0-9_.-]{0,99}_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\.\d{3}_UTC[+-]\d{4})\.tar\.gz$`)
+
+func fullBackupName(host string, now time.Time) string {
+	host = strings.Trim(sanitizeBackupHost(host), "._-")
+	if host == "" {
+		host = "x-ui"
+	}
+	if len(host) > 100 {
+		host = host[:100]
+	}
+	return "full-" + host + "_" + now.Format("2006-01-02_15-04-05.000_UTC-0700") + ".tar.gz"
+}
 
 func isFullBackupName(name string) bool { return fullBackupNamePattern.MatchString(name) }
 
@@ -456,6 +487,19 @@ func FullBackupPath(name string) (string, error) {
 		return "", fmt.Errorf("backup is not a regular file")
 	}
 	return path, nil
+}
+
+// DeleteFullBackup removes only completed local archives, never remote copies.
+func DeleteFullBackup(name string) error {
+	if !fullBackupMu.TryLock() {
+		return fmt.Errorf("a full backup is already running; try deleting after it completes")
+	}
+	defer fullBackupMu.Unlock()
+	path, err := FullBackupPath(name)
+	if err != nil {
+		return err
+	}
+	return os.Remove(path)
 }
 
 func pruneFullBackups(keep int) error {

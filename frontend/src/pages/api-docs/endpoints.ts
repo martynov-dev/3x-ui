@@ -277,7 +277,7 @@ export const sections: readonly Section[] = [
         method: 'GET',
         path: '/panel/api/maintenance/backups/download/:name',
         summary:
-          'Download an existing full archive. Restore manually; database import does not accept full archives.',
+          'Download an existing full archive byte-for-byte. Restore with setup.sh --backup; database import does not accept full archives.',
         params: [{ name: 'name', in: 'path', type: 'string' }],
         responses: {
           '200': {
@@ -286,6 +286,13 @@ export const sections: readonly Section[] = [
           },
           '404': { description: 'Invalid or missing archive' },
         },
+      },
+      {
+        method: 'DELETE',
+        path: '/panel/api/maintenance/backups/:name',
+        summary:
+          'Delete a completed local archive. Remote SSH copies are retained. Rejected while a backup is running.',
+        params: [{ name: 'name', in: 'path', type: 'string' }],
       },
       {
         method: 'GET',

@@ -13,6 +13,7 @@ import sys
 import tarfile
 import tempfile
 import time
+import urllib.parse
 import urllib.error
 import urllib.request
 
@@ -33,13 +34,15 @@ class Client:
         self.request("/login", {"username": "dev-admin", "password": "LocalTest-3xui-2026"})
         self.csrf = self.request("/csrf-token")["obj"]
 
-    def request(self, path, data=None, success=True, raw=False):
+    def request(self, path, data=None, success=True, raw=False, method=None):
         headers = {"X-CSRF-Token": getattr(self, "csrf", "")}
+        if raw:
+            headers["Accept-Encoding"] = "gzip"
         payload = None
         if data is not None:
             payload = json.dumps(data).encode()
             headers["Content-Type"] = "application/json"
-        with self.http.open(urllib.request.Request(BASE + path, payload, headers), timeout=180) as response:
+        with self.http.open(urllib.request.Request(BASE + path, payload, headers, method=method), timeout=180) as response:
             body = response.read()
         if raw:
             return body
@@ -95,6 +98,9 @@ def main():
     client.request(API + "/backups/run", {})
     name = client.backups()["status"]["file"]
     archive_bytes = client.request(API + "/backups/download/" + name, raw=True)
+    local_hash = docker("exec", "-T", "panel", "sha256sum", "/etc/x-ui/full-backups/" + name).split()[0]
+    assert hashlib.sha256(archive_bytes).hexdigest() == local_hash
+    assert "_UTC" in name
     with tarfile.open(fileobj=io.BytesIO(archive_bytes), mode="r:gz") as archive:
         names = set(archive.getnames())
         for required in ["database/x-ui.db", "files/app/x-ui", "files/etc/nginx/nginx.conf",
@@ -162,6 +168,12 @@ def main():
     settings["enabled"] = False
     client.request(API + "/backups/settings", settings)
     print("PASS: actual scheduled backup and remote delivery", flush=True)
+    name = status["file"]
+    client.request(API + "/backups/" + urllib.parse.quote(name), method="DELETE")
+    assert not any(f["name"] == name for f in client.backups()["files"])
+    assert docker("exec", "-T", "backup-target", "test", "-f", "/srv/backups/3x-ui/" + name) == ""
+    client.request(API + "/backups/x-ui.db", method="DELETE", success=False)
+    print("PASS: local deletion, remote copy retained, unsafe filenames rejected", flush=True)
     print("ALL CHECKS PASSED. Panel: " + BASE + "/panel/maintenance", flush=True)
 
 

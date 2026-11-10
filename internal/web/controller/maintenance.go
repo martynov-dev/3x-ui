@@ -52,6 +52,9 @@ func registerMaintenanceRoutes(api *gin.RouterGroup) {
 		c.Header("Cache-Control", "no-store")
 		c.FileAttachment(path, c.Param("name"))
 	})
+	g.DELETE("/backups/:name", func(c *gin.Context) {
+		jsonObj(c, nil, service.DeleteFullBackup(c.Param("name")))
+	})
 	g.GET("/nginx", func(c *gin.Context) {
 		value, err := settings.GetNginxSitePaths()
 		if err != nil {

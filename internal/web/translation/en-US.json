@@ -2861,6 +2861,8 @@
     "settings": "Settings"
   },
   "maintenance": {
+    "created": "Created (your local time)",
+    "deleteConfirm": "Delete this archive from the panel server? Remote copies on other devices will remain.",
     "title": "Backups and website",
     "backups": "Full backups",
     "site": "nginx website",
